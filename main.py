@@ -25,9 +25,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+CREDENTIALS_PATH = os.environ.get("CREDENTIALS_PATH")
 
 # gc = gspread.service_account()
-gc = gspread.service_account(filename="/etc/secrets/credentials.json")
+gc = gspread.service_account(filename=CREDENTIALS_PATH)
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
