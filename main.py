@@ -9,6 +9,8 @@ from openai import AsyncOpenAI
 from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+from utils import __grab_keys_from_sheet, __count_min_value_by_criteria, __count_avg_value_by_topic
+
 origins = [
     "https://student-care.sky.pro",
     "http://localhost",
@@ -25,44 +27,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+TOPICS_TAB = "topics"
+CRITERIA_TAB = "criteria"
 CREDENTIALS_PATH = os.environ.get("CREDENTIALS_PATH")
-
-# gc = gspread.service_account()
-gc = gspread.service_account(filename=CREDENTIALS_PATH)
-
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
 if OPENAI_API_KEY is None:
     raise NameError("OPENAI_API_KEY is not set")
+
+# gc = gspread.service_account()
+gc = gspread.service_account(filename=CREDENTIALS_PATH)
 
 client = AsyncOpenAI(
     # This is the default and can be omitted
     api_key=OPENAI_API_KEY,
 )
 
-
-def __grab_keys_from_sheet(worksheet):
-    keys = worksheet.row_values(1)
-    keys.remove("ticket_id")
-    logger.debug(f"Groups found {keys}")
-    return keys
-
-
-def __count_avg_criteria_by_group(items, factor_name):
-
-    values = []
-
-    for item in items:
-        if item.get('group') == factor_name:
-            values.append(int(item.get("grade"))-3)
-
-    logger.debug(values)
-
-    if len(values) == 0:
-        return 0
-
-    return round(sum(values) / (len(values) * 2), 2)  #  percentage in factor completion (0-100)
-    # can change the formula to min in no-time
 
 @app.get("/checklist/{sheet_id}")
 async def get(sheet_id):
@@ -119,6 +99,11 @@ async def save_report(request: Request):
         return JSONResponse({"error": "incorrect JSON, try again"}, status_code=400)
 
     try:
+        ticket_id = data["ticket_id"]
+    except KeyError:
+        return JSONResponse({"error": "incorrect query, key ticket_id expected"}, status_code=400)
+
+    try:
         checklist_data = data["checklist_data"].values()
     except KeyError:
         return JSONResponse({"error": "incorrect query, key checklist_data expected"}, status_code=400)
@@ -131,7 +116,7 @@ async def save_report(request: Request):
     try:
 
         if "http" in sheet_id:
-            sheet_id = sheet_id.split("/")[5]
+            sheet_id = max(sheet_id.split("/"), key=len)
             logger.debug(f"Link received, opening {sheet_id}")
 
         file = gc.open_by_key(sheet_id)
@@ -142,15 +127,25 @@ async def save_report(request: Request):
     except SpreadsheetNotFound:
         return JSONResponse({"error": "file not found"}, status_code=404)
 
-    result_sheet = file.worksheet("results")
+    # Добавление в cтатистику
 
-    row_to_push = ["ticket_id"]
+    topics_sheet = file.worksheet(TOPICS_TAB)
+    topics_row_to_push = [ticket_id]
+    for result_key in __grab_keys_from_sheet(topics_sheet):
+        average_percent = __count_avg_value_by_topic(checklist_data, result_key)
+        topics_row_to_push.append(average_percent)
 
-    for result_key in __grab_keys_from_sheet(result_sheet):
+    topics_sheet.append_row(topics_row_to_push)
 
-        average_percent = __count_avg_criteria_by_group(checklist_data, result_key)
-        row_to_push.append(average_percent)
+    # Добавление в критерии
 
-    result_sheet.append_row(row_to_push)
+    criteria_sheets = file.worksheet(CRITERIA_TAB)
+    criteria_row_to_push = [ticket_id]
+    for result_key in __grab_keys_from_sheet(criteria_sheets):
+        min_grade = __count_min_value_by_criteria(checklist_data, result_key)
+        criteria_row_to_push.append(min_grade)
 
-    return {"response": row_to_push}
+    criteria_sheets.append_row(criteria_row_to_push)
+
+
+    return {"topics": topics_row_to_push, "creiteria": criteria_row_to_push}
