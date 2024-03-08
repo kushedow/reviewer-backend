@@ -1,2 +1,4 @@
 /venv/
 /credentials.json
+/test_run.py
+/samples/checklist.json
