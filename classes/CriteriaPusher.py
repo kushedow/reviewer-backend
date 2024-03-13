@@ -33,6 +33,7 @@ class CriteriaPusher:
                 "student_full_name": report.student_full_name,
                 "mentor_full_name": report.mentor_full_name,
                 "stream_name": report.stream_name,
+                "task_name": report.task_name,
             }
 
             logger.debug("Adding criteria report", value=data_to_push)

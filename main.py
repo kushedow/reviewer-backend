@@ -81,11 +81,7 @@ async def build_checklist(checklist_request: ChecklistRequest):
 
     try:
         # делаем запись об открытии тикета
-        activity_pusher.push(
-            ticket_id=checklist_request.ticket_id,
-            mentor=checklist_request.mentor_full_name,
-            event="open"
-        )
+        activity_pusher.push(model=checklist_request, event="open")
 
     except GSpreadException as error:
         return JSONResponse({"error": str(error)}, status_code=400)
@@ -112,11 +108,8 @@ async def save_report(report: ChecklistReport):
 
     try:
         # делаем запись о закрытии тикета
-        activity_pusher.push(
-            ticket_id=report.ticket_id,
-            mentor=report.mentor_full_name,
-            event="close"
-        )
+        activity_pusher.push(model=report, event="close")
+
         # делаем запись по критериям
         criteria_pusher.push_from_report(report=report)
 
