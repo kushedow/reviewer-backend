@@ -43,33 +43,6 @@ checklist_builder = ChecklistBuilder(gc)
 ai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 
-# DEPRECATED
-@app.get("/checklist/{sheet_id}")
-async def get(sheet_id):
-    try:
-        # достаем файл
-        file = gc.open_by_key(sheet_id)
-
-        # проходимся по первым 5 вкладкам, в надежде найти критерии хоть где то
-        for i in range(5):
-
-            sheet = file.get_worksheet(i)
-            if sheet is None:
-                break
-            # TODO add sheet check
-            data = sheet.get_all_records()
-            if len(data) > 0 and "title" in data[0]:
-                return data
-
-        return JSONResponse({"error": "no good checklist in this document"}, status_code=400)
-
-    except PermissionError:
-        return JSONResponse({"error": "file is not public"}, status_code=403)
-
-    except SpreadsheetNotFound:
-        return JSONResponse({"error": "file not found"}, status_code=404)
-
-
 @app.post("/checklist")
 async def build_checklist(checklist_request: ChecklistRequest):
 
