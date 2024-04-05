@@ -4,8 +4,27 @@ from loguru import logger
 
 class ChecklistBuilder:
 
-    def __init__(self, g_client):
+    def __init__(self, g_client, index_sheet):
         self.__google_client: Client = g_client
+        self.__index_sheet = index_sheet
+        self.__map = self._load_indices(index_sheet)
+
+    def _load_indices(self, index_sheet_id):
+
+        file = self.__google_client.open_by_key(index_sheet_id)
+        sheet = file.worksheet("index")
+        records = sheet.get_all_records()
+        lessons_to_sheets = {record["lesson"]: record["sheet_id"] for record in records}
+        return lessons_to_sheets
+
+    def build_by_task_name(self, task_name):
+
+        sheet_id = self.__map.get(task_name)
+        if sheet_id is None:
+            raise ValueError("No checklist for this lesson name")
+        checklist = self.build(sheet_id)
+        return checklist
+
 
     def build(self, sheet_id):
 
@@ -27,3 +46,5 @@ class ChecklistBuilder:
 
         raise ValueError("No good checklist in this document")
 
+    def reload(self):
+        self.__map = self._load_indices(self.__index_sheet)
