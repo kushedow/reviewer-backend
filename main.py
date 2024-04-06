@@ -46,12 +46,12 @@ ai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 @app.post("/checklist")
 async def build_checklist(checklist_request: ChecklistRequest):
-    """Если название урока задано - используем его. Иначе используем sheet_id"""
+    """Если sheet_id на док задана - используем еу. Иначе используем название"""
     try:
-        if checklist_request.task_name:
-            checklist = checklist_builder.build_by_task_name(checklist_request.task_name)
-        elif checklist_request.sheet_id:
+        if checklist_request.sheet_id:
             checklist = checklist_builder.build(checklist_request.sheet_id)
+        elif checklist_request.task_name:
+            checklist = checklist_builder.build_by_task_name(checklist_request.task_name)
         else:
             return JSONResponse({"error": "task_name or sheet_id expected"}, status_code=400)
 
