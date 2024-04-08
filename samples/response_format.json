@@ -1,0 +1,5 @@
+[
+    {"criteria": "<criteria 1 title>", "grade": "<criteria 1 grade value>"},
+    {"criteria": "<criteria 2 title>", "grade": "<criteria 2 grade value>"},
+    {"criteria": "<criteria 3 title>", "grade": "<criteria 3 grade value>"}
+]

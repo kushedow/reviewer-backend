@@ -9,9 +9,10 @@ from pydantic import ValidationError
 from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from classes.ActivityPusher import ActivityPusher
-from classes.ChecklistBuilder import ChecklistBuilder
-from classes.CriteriaPusher import CriteriaPusher
+from classes.activity_pusher import ActivityPusher
+from classes.ai_pusher import AIPusher
+from classes.checklist_builder import ChecklistBuilder
+from classes.criteria_pusher import CriteriaPusher
 from models.AIRequest import AIRequest
 from models.ChecklistReport import ChecklistReport
 from models.ChecklistRequest import ChecklistRequest
@@ -27,7 +28,9 @@ CREDENTIALS_PATH = os.environ.get("CREDENTIALS_PATH")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 CRITERIA_REPORTS_DOCUMENT = "1hX_6SQTRp3iprm400GzAq6ImX_8EwtygYfKudnqI2OA"
 ACTIVITIES_REPORTS_DOCUMENT = "1SkCYQkrRdsApiaVDCeHJ-nf5ro9rRaFGmKuCciOyzNA"
+GENERATIONS_REPORTS_DOCUMENT = "119WqXPSYDkALioEvvWZ_gqoaNIqQlk2X093m9sxPJtM"
 INDICES_DOCUMENT = "1iS2zGIcv_e9EkhWB5jH5CVWHzb81h862XgHC-ZF_fCs"
+ALLOWED_FILETYPES = (".js", ".java", ".py", ".class", ".gitignore")
 
 if OPENAI_API_KEY is None:
     raise NameError("OPENAI_API_KEY is not set")
@@ -38,11 +41,13 @@ gc = gspread.service_account(filename=CREDENTIALS_PATH)
 criteria_pusher = CriteriaPusher(gc, CRITERIA_REPORTS_DOCUMENT)
 # объект для отправки отчета по открытию и закрытию проверки
 activity_pusher = ActivityPusher(gc, ACTIVITIES_REPORTS_DOCUMENT)
+# объект для отправки записей про AI генераций
+ai_pusher = AIPusher(gc, GENERATIONS_REPORTS_DOCUMENT)
 # объект для сборки критериев из таблиц
 checklist_builder = ChecklistBuilder(gc, INDICES_DOCUMENT)
 # объект для доступа в нейронке
 ai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-#]
+
 
 @app.post("/checklist")
 async def build_checklist(checklist_request: ChecklistRequest):
@@ -67,11 +72,13 @@ async def build_checklist(checklist_request: ChecklistRequest):
 
     return JSONResponse(checklist, status_code=200)
 
+
 @app.get("/refresh")
 async def refresh():
     """Сбрасывает кэш  """
     checklist_builder.reload()
     return JSONResponse({}, status_code=200)
+
 
 @app.post("/generate")
 async def generate(ai_request: AIRequest):
@@ -81,6 +88,9 @@ async def generate(ai_request: AIRequest):
             model="gpt-4", messages=[{"role": "user", "content": ai_request.q}]
         )
         response = completion.choices[0].message.content
+
+        # логируем
+        ai_pusher.push(ai_request, response)
         return {"response": response}
 
     except OpenAIError as error:
@@ -93,7 +103,6 @@ async def save_report(report: ChecklistReport):
     try:
         # делаем запись о закрытии тикета
         activity_pusher.push(model=report, event="close")
-
         # делаем запись по критериям
         criteria_pusher.push_from_report(report=report)
 
