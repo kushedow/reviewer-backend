@@ -2,7 +2,7 @@ from gspread import Spreadsheet, Client
 from gspread.worksheet import Worksheet
 from loguru import logger
 
-from models.ChecklistReport import ChecklistReport
+from src.models.ChecklistReport import ChecklistReport
 
 class CriteriaPusher:
 
@@ -34,6 +34,7 @@ class CriteriaPusher:
                 "mentor_full_name": report.mentor_full_name,
                 "stream_name": report.stream_name,
                 "task_name": report.task_name,
+                "skill": criteria.get("skill"),
             }
 
             logger.debug("Adding criteria report", value=data_to_push)

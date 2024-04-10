@@ -1,21 +1,23 @@
 import os
-from json import JSONDecodeError
 import gspread
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from gspread import SpreadsheetNotFound, GSpreadException
 from openai import AsyncOpenAI, OpenAIError
-from pydantic import ValidationError
 from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from classes.activity_pusher import ActivityPusher
-from classes.ai_pusher import AIPusher
-from classes.checklist_builder import ChecklistBuilder
-from classes.criteria_pusher import CriteriaPusher
-from models.AIRequest import AIRequest
-from models.ChecklistReport import ChecklistReport
-from models.ChecklistRequest import ChecklistRequest
+from src.classes.activity_pusher import ActivityPusher
+from src.classes.ai_pusher import AIPusher
+from src.classes.checklist_builder import ChecklistBuilder
+from src.classes.criteria_pusher import CriteriaPusher
+from src.classes.prompts_loader import PromptsLoader
+from src.models.AIRequest import AIRequest
+from src.models.ChecklistReport import ChecklistReport
+from src.models.ChecklistRequest import ChecklistRequest
+
+# Достаем все конфиги
+import src.config as config
 
 app = FastAPI()
 
@@ -24,32 +26,27 @@ origins = ["https://student-care.sky.pro", "http://localhost", "http://localhost
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"],
                    allow_headers=["*"])
 
-CREDENTIALS_PATH = os.environ.get("CREDENTIALS_PATH")
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-CRITERIA_REPORTS_DOCUMENT = "1hX_6SQTRp3iprm400GzAq6ImX_8EwtygYfKudnqI2OA"
-ACTIVITIES_REPORTS_DOCUMENT = "1SkCYQkrRdsApiaVDCeHJ-nf5ro9rRaFGmKuCciOyzNA"
-GENERATIONS_REPORTS_DOCUMENT = "119WqXPSYDkALioEvvWZ_gqoaNIqQlk2X093m9sxPJtM"
-INDICES_DOCUMENT = "1iS2zGIcv_e9EkhWB5jH5CVWHzb81h862XgHC-ZF_fCs"
-ALLOWED_FILETYPES = (".js", ".java", ".py", ".class", ".gitignore")
 
-if OPENAI_API_KEY is None:
+if config.OPENAI_API_KEY is None:
     raise NameError("OPENAI_API_KEY is not set")
 
 #  клиент для работы с таблицами
-gc = gspread.service_account(filename=CREDENTIALS_PATH)
+gc = gspread.service_account(filename=config.CREDENTIALS_PATH)
 #  объект для отправки отчета по достижению критериев
-criteria_pusher = CriteriaPusher(gc, CRITERIA_REPORTS_DOCUMENT)
+criteria_pusher = CriteriaPusher(gc, config.CRITERIA_REPORTS_DOCUMENT)
 # объект для отправки отчета по открытию и закрытию проверки
-activity_pusher = ActivityPusher(gc, ACTIVITIES_REPORTS_DOCUMENT)
+activity_pusher = ActivityPusher(gc, config.ACTIVITIES_REPORTS_DOCUMENT)
 # объект для отправки записей про AI генераций
-ai_pusher = AIPusher(gc, GENERATIONS_REPORTS_DOCUMENT)
+ai_pusher = AIPusher(gc, config.GENERATIONS_REPORTS_DOCUMENT)
 # объект для сборки критериев из таблиц
-checklist_builder = ChecklistBuilder(gc, INDICES_DOCUMENT)
+checklist_builder = ChecklistBuilder(gc, config.INDICES_DOCUMENT)
+# объект для загрузки промптов
+prompts_loader = PromptsLoader(gc, config.PROMPTS_DOCUMENT)
 # объект для доступа в нейронке
-ai_client = AsyncOpenAI(api_key=OPENAI_API_KEY)
+ai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 
 
-@app.post("/checklist")
+@app.post("/checklist", tags=["Checklist"])
 async def build_checklist(checklist_request: ChecklistRequest):
     """Если sheet_id на док задана - используем еу. Иначе используем название"""
     try:
@@ -73,15 +70,23 @@ async def build_checklist(checklist_request: ChecklistRequest):
     return JSONResponse(checklist, status_code=200)
 
 
-@app.get("/refresh")
+@app.get("/refresh", tags=["Utils"])
 async def refresh():
-    """Сбрасывает кэш  """
+    """
+    Сбрасывает кэш и заново перегружает критерии и промпты
+    """
     checklist_builder.reload()
+    prompts_loader.reload()
     return JSONResponse({}, status_code=200)
 
 
-@app.post("/generate")
+@app.post("/generate", tags=["AI"])
 async def generate(ai_request: AIRequest):
+    """
+    Генерирует мотивирующую обратную связь для
+    :param ai_request:
+    :return:
+    """
 
     try:
         completion = await ai_client.chat.completions.create(
@@ -97,7 +102,7 @@ async def generate(ai_request: AIRequest):
         return JSONResponse({"error": error}, status_code=500)
 
 
-@app.post("/report")
+@app.post("/report", tags=["Report"])
 async def save_report(report: ChecklistReport):
 
     try:
@@ -110,3 +115,12 @@ async def save_report(report: ChecklistReport):
         return JSONResponse({"error": error}, status_code=400)
 
     return JSONResponse({"message": "success"}, status_code=201)
+
+@app.get("/prompts", tags=["AI"])
+async def list_prompts():
+    return prompts_loader.list()
+
+
+@app.get("/prompts/{name}", tags=["AI"])
+async def get_prompt_by_name(name: str):
+    return prompts_loader.get(name)
