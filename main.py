@@ -8,10 +8,11 @@ from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.classes.activity_pusher import ActivityPusher
+from src.classes.ai_feedback_builder import AIFeedBackBuilder
 from src.classes.ai_pusher import AIPusher
 from src.classes.checklist_builder import ChecklistBuilder
 from src.classes.criteria_pusher import CriteriaPusher
-from src.classes.prompts_loader import PromptsLoader
+from src.classes.prompts_loader import PromptsLoader, PromptException
 from src.models.AIRequest import AIRequest
 from src.models.ChecklistReport import ChecklistReport
 from src.models.ChecklistRequest import ChecklistRequest
@@ -25,7 +26,6 @@ app = FastAPI()
 origins = ["https://student-care.sky.pro", "http://localhost", "http://localhost:10000", ]
 app.add_middleware(CORSMiddleware, allow_origins=origins, allow_credentials=True, allow_methods=["*"],
                    allow_headers=["*"])
-
 
 if config.OPENAI_API_KEY is None:
     raise NameError("OPENAI_API_KEY is not set")
@@ -44,7 +44,8 @@ checklist_builder = ChecklistBuilder(gc, config.INDICES_DOCUMENT)
 prompts_loader = PromptsLoader(gc, config.PROMPTS_DOCUMENT)
 # объект для доступа в нейронке
 ai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
-
+# объект для генерации фидбека нейроночкой
+feedback_builder = AIFeedBackBuilder(ai_client, prompts_loader, ai_pusher)
 
 @app.post("/checklist", tags=["Checklist"])
 async def build_checklist(checklist_request: ChecklistRequest):
@@ -77,7 +78,7 @@ async def refresh():
     """
     checklist_builder.reload()
     prompts_loader.reload()
-    return JSONResponse({}, status_code=200)
+    return JSONResponse({"message": "Кэш промптов и чеклистов сброшен"}, status_code=200)
 
 
 @app.post("/generate", tags=["AI"])
@@ -102,9 +103,28 @@ async def generate(ai_request: AIRequest):
         return JSONResponse({"error": error}, status_code=500)
 
 
+@app.post("/generate-motivation", tags=["AI"])
+async def generate_motivation(ai_request: AIRequest):
+    """
+   Генерирует мотивирующую обратную связь
+   :param ai_request:
+   """
+    try:
+        result = await feedback_builder.build(ai_request)
+        return {"response": result}
+
+    except PromptException as error:
+        return JSONResponse({"error": "Ошибка при загрузке промпта, проверьте имя"}, status_code=400)
+
+    except GSpreadException as error:
+        return JSONResponse({"error": error}, status_code=400)
+
+    except OpenAIError as error:
+        return JSONResponse({"error": error}, status_code=400)
+
+
 @app.post("/report", tags=["Report"])
 async def save_report(report: ChecklistReport):
-
     try:
         # делаем запись о закрытии тикета
         activity_pusher.push(model=report, event="close")
@@ -115,6 +135,7 @@ async def save_report(report: ChecklistReport):
         return JSONResponse({"error": error}, status_code=400)
 
     return JSONResponse({"message": "success"}, status_code=201)
+
 
 @app.get("/prompts", tags=["AI"])
 async def list_prompts():
