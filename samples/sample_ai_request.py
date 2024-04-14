@@ -1,4 +1,4 @@
-from src.models.AIRequest import AIRequest
+from src.models.ai_request import AIRequest
 
 ai_request = AIRequest(
     ticket_id=123,

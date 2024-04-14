@@ -7,15 +7,15 @@ from openai import AsyncOpenAI, OpenAIError
 from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.classes.activity_pusher import ActivityPusher
+from src.models.ai_request import AIRequest
+from src.models.checklist_report import ChecklistReport
+from src.models.checklist_request import ChecklistRequest
+
 from src.classes.ai_feedback_builder import AIFeedBackBuilder
-from src.classes.ai_pusher import AIPusher
 from src.classes.checklist_builder import ChecklistBuilder
-from src.classes.criteria_pusher import CriteriaPusher
 from src.classes.prompts_loader import PromptsLoader, PromptException
-from src.models.AIRequest import AIRequest
-from src.models.ChecklistReport import ChecklistReport
-from src.models.ChecklistRequest import ChecklistRequest
+from src.classes.sheet_pusher import SheetPusher
+
 
 # Достаем все конфиги
 import src.config as config
@@ -32,20 +32,16 @@ if config.OPENAI_API_KEY is None:
 
 #  клиент для работы с таблицами
 gc = gspread.service_account(filename=config.CREDENTIALS_PATH)
-#  объект для отправки отчета по достижению критериев
-criteria_pusher = CriteriaPusher(gc, config.CRITERIA_REPORTS_DOCUMENT)
-# объект для отправки отчета по открытию и закрытию проверки
-activity_pusher = ActivityPusher(gc, config.ACTIVITIES_REPORTS_DOCUMENT)
-# объект для отправки записей про AI генераций
-ai_pusher = AIPusher(gc, config.GENERATIONS_REPORTS_DOCUMENT)
+#  объект для отправки отчетов в гуглдоки
+sheet_pusher = SheetPusher(gc, config.SHEET_IDS)
 # объект для сборки критериев из таблиц
-checklist_builder = ChecklistBuilder(gc, config.INDICES_DOCUMENT)
+checklist_builder = ChecklistBuilder(gc, config.SHEET_IDS["INDICES"])
 # объект для загрузки промптов
-prompts_loader = PromptsLoader(gc, config.PROMPTS_DOCUMENT)
+prompts_loader = PromptsLoader(gc, config.SHEET_IDS["PROMPTS"])
 # объект для доступа в нейронке
 ai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 # объект для генерации фидбека нейроночкой
-feedback_builder = AIFeedBackBuilder(ai_client, prompts_loader, ai_pusher)
+feedback_builder = AIFeedBackBuilder(ai_client, prompts_loader, sheet_pusher)
 
 @app.post("/checklist", tags=["Checklist"])
 async def build_checklist(checklist_request: ChecklistRequest):
@@ -63,7 +59,7 @@ async def build_checklist(checklist_request: ChecklistRequest):
 
     try:
         # делаем запись об открытии тикета
-        activity_pusher.push(model=checklist_request, event="open")
+        sheet_pusher.push_activity_from_request(model=checklist_request, event="open")
 
     except GSpreadException as error:
         return JSONResponse({"error": str(error)}, status_code=400)
@@ -96,7 +92,7 @@ async def generate(ai_request: AIRequest):
         response = completion.choices[0].message.content
 
         # логируем
-        ai_pusher.push(ai_request, response)
+        sheet_pusher.push_ai_generation_from_request(ai_request, response)
         return {"response": response}
 
     except OpenAIError as error:
@@ -125,11 +121,16 @@ async def generate_motivation(ai_request: AIRequest):
 
 @app.post("/report", tags=["Report"])
 async def save_report(report: ChecklistReport):
+    """
+    Сохраняем отчет как ученик сделал домашку
+    :param report:
+    :return:
+    """
     try:
         # делаем запись о закрытии тикета
-        activity_pusher.push(model=report, event="close")
+        sheet_pusher.push_activity_from_request(model=report, event="close")
         # делаем запись по критериям
-        criteria_pusher.push_from_report(report=report)
+        sheet_pusher.push_criteria_from_report(report=report)
 
     except GSpreadException as error:
         return JSONResponse({"error": error}, status_code=400)

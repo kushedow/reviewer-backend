@@ -1,8 +1,8 @@
 from openai import AsyncOpenAI, OpenAIError
 
-from src.classes.ai_pusher import AIPusher
 from src.classes.prompts_loader import PromptsLoader
-from src.models.AIRequest import AIRequest
+from src.classes.sheet_pusher import SheetPusher
+from src.models.ai_request import AIRequest
 
 
 class AIFeedBackBuilder:
@@ -10,10 +10,10 @@ class AIFeedBackBuilder:
     Генерируем мотивирующую обратную связь на основе написанного фидбека и таблицы с промптами
     """
 
-    def __init__(self, ai_client: AsyncOpenAI, prompts_loader: PromptsLoader, pusher: AIPusher):
+    def __init__(self, ai_client: AsyncOpenAI, prompts_loader: PromptsLoader, pusher: SheetPusher):
         self.__ai_client = ai_client
         self.__prompts_loader = prompts_loader
-        self.__pusher = pusher
+        self.__pusher: SheetPusher = pusher
 
     async def _make_request(self, prompt):
         """Выполняем запрос к нейронке по готовому промпту"""
@@ -25,7 +25,7 @@ class AIFeedBackBuilder:
 
         return response
 
-    def _buildPrompt(self, ai_request: AIRequest) -> str:
+    def _build_prompt(self, ai_request: AIRequest) -> str:
         """Собираем промпт для нейронки на основе"""
         prompt_template: str = self.__prompts_loader.get(ai_request.prompt_name)
         student_first_name: str = ai_request.student_full_name.split(" ")[0]
@@ -42,7 +42,7 @@ class AIFeedBackBuilder:
         Генерирует ответ с помощью __ai_client
         Логирует запрос в табличку с помощью AIPusher
         """
-        prompt = self._buildPrompt(ai_request)
+        prompt = self._build_prompt(ai_request)
         response = await self._make_request(prompt)
-        self.__pusher.push(ai_request, response)
+        self.__pusher.push_ai_generation_from_request(ai_request, response)
         return response
