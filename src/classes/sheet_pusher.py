@@ -30,6 +30,7 @@ class SheetPusher:
                 "mentor_full_name": report.mentor_full_name,
                 "stream_name": report.stream_name,
                 "task_name": report.task_name,
+                "step": criteria.get("step"),
                 "skill": criteria.get("skill"),
             }
 
