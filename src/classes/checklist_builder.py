@@ -21,10 +21,9 @@ class ChecklistBuilder:
 
         sheet_id = self.__map.get(task_name)
         if sheet_id is None:
-            raise ValueError("No checklist for this lesson name")
+            raise KeyError("No checklist for this lesson name")
         checklist = self.build(sheet_id)
         return checklist
-
 
     def build(self, sheet_id):
 

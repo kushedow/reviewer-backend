@@ -43,9 +43,10 @@ ai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 # объект для генерации фидбека нейроночкой
 feedback_builder = AIFeedBackBuilder(ai_client, prompts_loader, sheet_pusher)
 
+
 @app.post("/checklist", tags=["Checklist"])
 async def build_checklist(checklist_request: ChecklistRequest):
-    """Если sheet_id на док задана - используем еу. Иначе используем название"""
+    """Возвращем структурированный чеклист. Если sheet_id на док задана - используем его. Иначе используем название"""
     try:
         if checklist_request.sheet_id:
             checklist = checklist_builder.build(checklist_request.sheet_id)
@@ -54,15 +55,21 @@ async def build_checklist(checklist_request: ChecklistRequest):
         else:
             return JSONResponse({"error": "task_name or sheet_id expected"}, status_code=400)
 
-    except (GSpreadException, ValueError, SpreadsheetNotFound) as error:
+    # Если при загрузке произошла ошибка – вернем 400
+    except (GSpreadException, SpreadsheetNotFound) as error:
         return JSONResponse({"error": str(error)}, status_code=400)
+
+    # Если мы искали по имени и не нашли такого чеклиста – вернем 404
+    except KeyError as error:
+        return JSONResponse({"error": str(error)}, status_code=404)
 
     try:
         # делаем запись об открытии тикета
         sheet_pusher.push_activity_from_request(model=checklist_request, event="open")
 
+    # Если не удалось записать отчет об открытии тикета – выкидываем 500
     except GSpreadException as error:
-        return JSONResponse({"error": str(error)}, status_code=400)
+        return JSONResponse({"error": str(error)}, status_code=500)
 
     return JSONResponse(checklist, status_code=200)
 
