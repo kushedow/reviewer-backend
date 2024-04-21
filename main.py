@@ -150,6 +150,12 @@ async def list_prompts():
     return prompts_loader.list()
 
 
+@app.get("/version", tags=["Utility"])
+async def get_backend_version():
+    version = os.environ.get("FRONTEND_MIN_VERSION", "0.0")
+    return {"frontend__min_version": version}
+
+
 @app.get("/prompts/{name}", tags=["AI"])
 async def get_prompt_by_name(name: str):
     return prompts_loader.get(name)
