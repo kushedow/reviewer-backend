@@ -1,12 +1,6 @@
 from src.models.ai_request import AIRequest
 
-ai_request = AIRequest(
-    ticket_id=123,
-    student_full_name="Иван Иванов",
-    mentor_full_name="Петр Петров",
-    stream_name="Stream 1",
-    prompt_name="python",
-    feedback_body="""
+feedback_body = """
 ✴️⠀Решение выложено на GitHub и находится в ветке develop ⠀
 
 ❌⠀В коммитах есть игнорируемые файлы ⠀
@@ -48,6 +42,14 @@ Product.products_count += 1
 Можно написать тест, который покроет
 Category.categories_count += 1
 ✅⠀Тесты написаны с помощью pytest, отлично!⠀
-""".strip(),
-    task_name="Задание 1"
+""".strip()
+
+ai_request = AIRequest(
+    ticket_id=123,
+    student_full_name="Иван Иванов",
+    mentor_full_name="Петр Петров",
+    stream_name="Stream 1",
+    prompt_name="python",
+    feedback_body=feedback_body,
+    task_name = "Задание 1"
 )

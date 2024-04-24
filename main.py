@@ -3,7 +3,7 @@ import gspread
 
 from fastapi import FastAPI
 from gspread import SpreadsheetNotFound, GSpreadException
-from openai import AsyncOpenAI, OpenAIError
+from openai import AsyncOpenAI, OpenAIError, PermissionDeniedError, RateLimitError, APIConnectionError
 from starlette.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -46,7 +46,7 @@ feedback_builder = AIFeedBackBuilder(ai_client, prompts_loader, sheet_pusher)
 
 @app.post("/checklist", tags=["Checklist"])
 async def build_checklist(checklist_request: ChecklistRequest):
-    """Возвращем структурированный чеклист. Если sheet_id на док задана - используем его. Иначе используем название"""
+    """Возвращаем структурированный чеклист. Если sheet_id на док задана - используем его. Иначе используем название"""
     try:
         if checklist_request.sheet_id:
             checklist = checklist_builder.build(checklist_request.sheet_id)
@@ -84,28 +84,6 @@ async def refresh():
     return JSONResponse({"message": "Кэш промптов и чеклистов сброшен"}, status_code=200)
 
 
-@app.post("/generate", tags=["AI"])
-async def generate(ai_request: AIRequest):
-    """
-    Генерирует мотивирующую обратную связь для
-    :param ai_request:
-    :return:
-    """
-
-    try:
-        completion = await ai_client.chat.completions.create(
-            model="gpt-4", messages=[{"role": "user", "content": ai_request.q}]
-        )
-        response = completion.choices[0].message.content
-
-        # логируем
-        sheet_pusher.push_ai_generation_from_request(ai_request, response)
-        return {"response": response}
-
-    except OpenAIError as error:
-        return JSONResponse({"error": error}, status_code=500)
-
-
 @app.post("/generate-motivation", tags=["AI"])
 async def generate_motivation(ai_request: AIRequest):
     """
@@ -121,6 +99,15 @@ async def generate_motivation(ai_request: AIRequest):
 
     except GSpreadException as error:
         return JSONResponse({"error": error}, status_code=400)
+
+    except PermissionDeniedError as error:
+        return JSONResponse({"error": "No access to OpenAI API"}, status_code=500)
+
+    except RateLimitError as error:
+        return JSONResponse({"error": "RateLimitError, check OpenAI account balance"}, status_code=500)
+
+    except APIConnectionError as error:
+        return JSONResponse({"error": "APIConnectionError, check OpenAI connection"}, status_code=500)
 
     except OpenAIError as error:
         return JSONResponse({"error": error}, status_code=400)

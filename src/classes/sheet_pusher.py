@@ -24,6 +24,7 @@ class SheetPusher:
         for criteria in report.checklist_data.values():
             data_to_push = {
                 "ticket_id": report.ticket_id,
+                "student_id": criteria.get("student_id"),
                 "title": criteria.get("title"),
                 "grade": criteria.get("grade"),
                 "student_full_name": report.student_full_name,
@@ -32,6 +33,7 @@ class SheetPusher:
                 "task_name": report.task_name,
                 "step": criteria.get("step"),
                 "skill": criteria.get("skill"),
+                "note": criteria.get("note")
             }
 
             logger.debug("Adding criteria report", value=data_to_push)
