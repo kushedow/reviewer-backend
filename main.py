@@ -19,6 +19,7 @@ from src.classes.sheet_pusher import SheetPusher
 
 # Достаем все конфиги
 import src.config as config
+from src.models.softskills_report import SoftskillsReport
 
 app = FastAPI()
 
@@ -125,6 +126,22 @@ async def save_report(report: ChecklistReport):
         sheet_pusher.push_activity_from_request(model=report, event="close")
         # делаем запись по критериям
         sheet_pusher.push_criteria_from_report(report=report)
+
+    except GSpreadException as error:
+        return JSONResponse({"error": error}, status_code=400)
+
+    return JSONResponse({"message": "success"}, status_code=201)
+
+
+@app.post("/report-soft-skills", tags=["Report"])
+async def save_soft_skills_report(report: SoftskillsReport):
+    """
+    Сохраняем отчет по софтам
+    :param report:
+    :return:
+    """
+    try:
+        sheet_pusher.push_softskills_from_request(report)
 
     except GSpreadException as error:
         return JSONResponse({"error": error}, status_code=400)

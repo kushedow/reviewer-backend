@@ -9,7 +9,8 @@ SHEET_IDS = {
     "ACTIVITIES": "1SkCYQkrRdsApiaVDCeHJ-nf5ro9rRaFGmKuCciOyzNA",
     "GENERATIONS": "119WqXPSYDkALioEvvWZ_gqoaNIqQlk2X093m9sxPJtM",
     "INDICES": "1iS2zGIcv_e9EkhWB5jH5CVWHzb81h862XgHC-ZF_fCs",
-    "PROMPTS": "1Mo0D4-oVvk0ukRDfnYyR09luzyrZ5iNGQmuX1sAzq3A"
+    "PROMPTS": "1Mo0D4-oVvk0ukRDfnYyR09luzyrZ5iNGQmuX1sAzq3A",
+    "SOFTSKILLS": "1O__0V3VvT6eFU_e7fRpfa5Bpc_v3dRXT3q15fU9sN9E",
 
 }
 
