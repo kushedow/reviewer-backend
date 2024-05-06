@@ -24,6 +24,7 @@ class ChecklistBuilder:
         task_name = task_name.replace("  ", " ")
 
         sheet_id = self.__map.get(task_name)
+
         if sheet_id is None:
             raise KeyError("No checklist for this lesson name")
         checklist = self.build(sheet_id)
