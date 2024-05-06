@@ -1,16 +1,29 @@
 from pydantic import BaseModel, Field
 
+feedback_body = """
+✅⠀Решение выложено на GitHub и находится в ветке main⠀
+✅⠀В коммитах нет игнорируемых файлов, отлично!⠀
+✅⠀Создан .gitignore файл, использован шаблон для заполнения (например, этот: https://github.com/github/gitignore/blob/main/Python.gitignore)⠀
+</p><p><strong>Соотетствие pep 8: </strong></p><p>
+✅⠀Нет грубых нарушений PEP8 в оформлении кода⠀
+</p><p><strong>Класс категории: </strong></p><p>
+✅⠀В случае, если количество в товаре - нулевое происходит выбрасывание ошибки ValueError с соответсвующим сообщением. Сообщение при выбрасывании ошибки переопределено и сообщает пользователю о том, что из-за чего произошла ошибка (например, "Нельзя добавить товар с нулевым количеством!")⠀
+✅⠀В классе категории реализован метод, который работает с приватным атрибутом списка товаров. Метод расчитывает среднюю стоимость с помощью функций sum() и len() ⠀
+✅⠀Метод подсчета среднего ценника возвращает верные значения⠀
+✅⠀Обработан случай, когда в категории нет товаров и сумма всех товаров будет делиться на ноль. Метод подсчета среднего ценника возвращает 0, когда количество товаров в категории равно 0. Ошибки деления на ноль не возникает.⠀
+✅⠀При нулевом количестве продуктов обрабатывается исключение ZeroDivisionError ⠀
+✅⠀При нулевом количестве товаров программа продолжает работу⠀
+""".strip()
 
 class AIRequest(BaseModel):
 
     # Обязательные
-    ticket_id: int = Field(description="ID проверяемого тикета")
-    student_full_name: str = Field(description="Имя ученика, чью работу мы проверяем")
-    mentor_full_name: str = Field(description="Имя наставника, на которого назначен тикет")
-    stream_name: str = Field(description="Название потока, на котором ученик")
+    ticket_id: int = Field(description="ID проверяемого тикета", examples=[111111])
+    student_full_name: str = Field(description="Имя ученика, чью работу мы проверяем", examples=["Глеб Кушедов"])
+    mentor_full_name: str = Field(description="Имя наставника, на которого назначен тикет", examples=["Слава Леонтьев"])
+    stream_name: str = Field(description="Название потока, на котором ученик", examples=["Тестовый поток"])
 
     # Опциональные
-    q: str = Field(default='', description="Сырой текст запроса")  # DEPRECATED
-    prompt_name: str = Field(default='', description="Название промпта из таблички с промптами")
-    feedback_body: str = Field(default='', description="Составленная ОС для ученика")
-    task_name: str = Field(default='', description="Название задания, которое мы проверяем")
+    prompt_name: str = Field(default='', description="Название промпта из таблички с промптами", examples=["NOAI"])
+    feedback_body: str = Field(default='', description="Составленная ОС для ученика", examples=[feedback_body])
+    task_name: str = Field(default='', description="Название задания, которое мы проверяем", examples=["Тест 1"])

@@ -34,5 +34,5 @@ class PromptsLoader:
             cell = self.__worksheet.find(name, in_column=1)
             prompt_value = self.__worksheet.row_values(cell.row)[1]
             return prompt_value
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, IndexError):
             raise PromptException(f"Не удалось загрузить промпт по такому имени: {name}")

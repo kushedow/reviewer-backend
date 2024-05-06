@@ -162,4 +162,8 @@ async def get_backend_version():
 
 @app.get("/prompts/{name}", tags=["AI"])
 async def get_prompt_by_name(name: str):
-    return prompts_loader.get(name)
+    try:
+        prompt_content = prompts_loader.get(name)
+        return prompt_content
+    except PromptException as error:
+        return JSONResponse({"error": str(error)}, status_code=404)

@@ -19,6 +19,10 @@ class ChecklistBuilder:
 
     def build_by_task_name(self, task_name):
 
+        task_name = task_name.strip()
+        task_name = task_name.replace("&nbsp;", " ")
+        task_name = task_name.replace("  ", " ")
+
         sheet_id = self.__map.get(task_name)
         if sheet_id is None:
             raise KeyError("No checklist for this lesson name")
