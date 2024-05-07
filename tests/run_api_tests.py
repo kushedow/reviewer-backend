@@ -88,7 +88,18 @@ class TestGenerateMotivation:
       "task_name": "Тест 1"
     }
 
-    def test_generate_motivation(self):
+    request_ai = {
+      "ticket_id": 111111,
+      "student_full_name": "Глеб Кушедов",
+      "mentor_full_name": "Слава Леонтьев",
+      "stream_name": "Тестовый поток",
+      "prompt_name": "python_simple",
+      "feedback_body": "✅⠀Решение выложено на GitHub и находится в ветке main⠀\n✅⠀В коммитах нет игнорируемых файлов, отлично!⠀\n✅⠀Создан .gitignore файл, использован шаблон для заполнения (например, этот: https://github.com/github/gitignore/blob/main/Python.gitignore)⠀\n</p><p><strong>Соотетствие pep 8: </strong></p><p>\n✅⠀Нет грубых нарушений PEP8 в оформлении кода⠀\n</p><p><strong>Класс категории: </strong></p><p>\n✅⠀В случае, если количество в товаре - нулевое происходит выбрасывание ошибки ValueError с соответсвующим сообщением. Сообщение при выбрасывании ошибки переопределено и сообщает пользователю о том, что из-за чего произошла ошибка (например, \"Нельзя добавить товар с нулевым количеством!\")⠀\n✅⠀В классе категории реализован метод, который работает с приватным атрибутом списка товаров. Метод расчитывает среднюю стоимость с помощью функций sum() и len() ⠀\n✅⠀Метод подсчета среднего ценника возвращает верные значения⠀\n✅⠀Обработан случай, когда в категории нет товаров и сумма всех товаров будет делиться на ноль. Метод подсчета среднего ценника возвращает 0, когда количество товаров в категории равно 0. Ошибки деления на ноль не возникает.⠀\n✅⠀При нулевом количестве продуктов обрабатывается исключение ZeroDivisionError ⠀\n✅⠀При нулевом количестве товаров программа продолжает работу⠀",
+      "task_name": "Тест 1"
+    }
+
+
+    def test_generate_motivation_low_ai(self):
 
         headers = {"Content-Type": "application/json"}
         response = requests.post(SERVER_URL + "generate-motivation", data=json.dumps(self.request), headers=headers)
@@ -98,6 +109,20 @@ class TestGenerateMotivation:
         response_text = response_data.get("response")
         assert response_text is not None
         assert "Глеб" in response_text
+
+
+    def test_generate_motivation_ai(self):
+
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(SERVER_URL + "generate-motivation", data=json.dumps(self.request_ai), headers=headers)
+        assert response.status_code == 200, "Status code is not 200"
+        response_data = response.json()
+        assert isinstance(response_data, dict)
+        response_text = response_data.get("response")
+        assert response_text is not None
+        assert "Глеб" in response_text
+
+
 
 class TestReports:
 

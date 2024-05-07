@@ -77,6 +77,7 @@ class AIFeedBackBuilder:
                      f"В ответе не должно быть квадратных скобок ///"
 
             response = await self._make_request(prompt)
+            self.__pusher.push_ai_generation_from_request(ai_request, response)
             return response
 
         prompt = self._build_prompt(ai_request)

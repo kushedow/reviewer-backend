@@ -57,7 +57,7 @@ class SheetPusher:
             created_at,
             model.ticket_id,
             model.mentor_full_name,
-            model.q + model.feedback_body,
+            model.feedback_body,
             output_text
         ])
 

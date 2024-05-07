@@ -26,4 +26,5 @@ class AIRequest(BaseModel):
     # Опциональные
     prompt_name: str = Field(default='', description="Название промпта из таблички с промптами", examples=["NOAI"])
     feedback_body: str = Field(default='', description="Составленная ОС для ученика", examples=[feedback_body])
-    task_name: str = Field(default='', description="Название задания, которое мы проверяем", examples=["Тест 1"])
+    task_name: str = Field(default='', description="Название задания, которое мы проверяем", examples=["Тестовое задание 1"])
+
