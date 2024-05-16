@@ -1,3 +1,4 @@
+import os
 import random
 
 from openai import AsyncOpenAI, OpenAIError
@@ -6,7 +7,7 @@ from src.classes.prompts_loader import PromptsLoader
 from src.classes.sheet_pusher import SheetPusher
 from src.models.ai_request import AIRequest
 from samples.motivation_temp import review_motivation
-
+from src.classes.yagpt_driver import YaGPTDriver
 
 class AIFeedBackBuilder:
     """
@@ -69,18 +70,40 @@ class AIFeedBackBuilder:
                      f"Имя ученика: {ai_request.student_full_name}" \
                      f"Шаг 1: определи пол преподавателя и ученика " \
                      f"Шаг 2: С учетом пола доработай текст в квадратных скобках:" \
-                     f"[Привет, <имя ученика>! \n {random.choice(motivation_items)} ]" \
+                     f"[Привет, <имя ученика без фамилии>! \n {random.choice(motivation_items)} ]" \
                      f"В ответе должен быть только результат выполнения шага 2" \
                      f"В ответе мы называем ученика по имени только 1 раз" \
                      f"В ответе мы НЕ используем имя преподавателя" \
-                     f"В ответе должен сохраниться символ ///" \
-                     f"В ответе не должно быть квадратных скобок ///"
+                     f"В ответе должны сохраниться ровно 3 символа: '///'" \
+                     f"В ответе не должно быть квадратных скобок"
 
             response = await self._make_request(prompt)
             self.__pusher.push_ai_generation_from_request(ai_request, response)
             return response
 
-        prompt = self._build_prompt(ai_request)
-        response = await self._make_request(prompt)
-        self.__pusher.push_ai_generation_from_request(ai_request, response)
-        return response
+        elif ai_request.prompt_name == "YAGPT":
+            grade = self._get_grade_from_review(ai_request.feedback_body)
+            motivation_items = review_motivation[grade]
+
+            prompt = f"Имя преподавателя: {ai_request.mentor_full_name}" \
+                     f"Имя ученика: {ai_request.student_full_name}" \
+                     f"Шаг 1: определи пол преподавателя и ученика " \
+                     f"Шаг 2: С учетом пола доработай текст в квадратных скобках:" \
+                     f"[Привет, <имя ученика БЕЗ фамилии>! \n {random.choice(motivation_items)} ]" \
+                     f"В ответе должен быть только результат выполнения шага 2" \
+                     f"В ответе мы называем ученика по имени только 1 раз" \
+                     f"В ответе мы НЕ используем имя преподавателя" \
+                     f"В ответе должны сохраниться ровно 3 символа: '///'" \
+                     f"В ответе не должно быть квадратных скобок"
+
+            key = os.environ.get("YANDEX_API_KEY")
+            driver = YaGPTDriver(api_key=key)
+            response = driver.query(prompt)
+            return response
+
+        else:
+
+            prompt = self._build_prompt(ai_request)
+            response = await self._make_request(prompt)
+            self.__pusher.push_ai_generation_from_request(ai_request, response)
+            return response
