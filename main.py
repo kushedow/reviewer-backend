@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
 from src.config import setup_cors
