@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 templates = Jinja2Templates(directory="src/templates")
@@ -6,19 +7,21 @@ templates = Jinja2Templates(directory="src/templates")
 import markdown2
 
 from loguru import logger
-from starlette.responses import HTMLResponse
 
-from src.dependencies import wiki_loader
+from src.dependencies import wiki_loader, sheet_pusher
 
 router = APIRouter()
 
 
 @router.get("/explain/{skill}", tags=["Explain"])
-async def refresh(request: Request, skill: str):
-
+async def explain(request: Request, skill: str, student_id: str = None):
     logger.debug("Запущена загрузка статьи по скиллу")
 
     try:
+        if student_id:
+            sheet_pusher.push_save_request_to_wiki(student_id, skill)
+            return RedirectResponse(url=f"/explain/{skill}", status_code=301)
+
         article = wiki_loader.load_wiki_by_skill(skill)
         article_text = markdown2.markdown(article, extras=["code-friendly", "fenced-code-blocks"])
 

@@ -13,6 +13,7 @@ SHEET_IDS = {
     "PROMPTS": "1Mo0D4-oVvk0ukRDfnYyR09luzyrZ5iNGQmuX1sAzq3A",
     "SOFTSKILLS": "1O__0V3VvT6eFU_e7fRpfa5Bpc_v3dRXT3q15fU9sN9E",
     "WIKI": "1nZq1glJDQpoOCvu1WQWPBII9ifzgBzN1yhOnUCWfzbY",
+    "WIKI_REQUESTS": "1mw0cIZz0HtLr_NKgU5Yx0UtPS5PaIxt0Rve9qqObv_A",
 
 }
 

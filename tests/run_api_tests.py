@@ -184,3 +184,10 @@ class TestReports:
         response = requests.post(SERVER_URL + "report-soft-skills", data=json.dumps(self.report_soft_data),
                                  headers=headers)
         assert response.status_code == 201, "Status code is not 201"
+
+
+class TestWikiRequests:
+
+    def test_requests_to_wiki(self):
+        response = requests.get(SERVER_URL + "explain/Работает с атрибутами класса./?student_id=1234567")
+        assert response.status_code == 200, "Status code is not 200"
