@@ -28,27 +28,27 @@ class ChecklistBuilder:
         if sheet_id is None:
             raise KeyError("No checklist for this lesson name")
         checklist = self.build(sheet_id)
+
         return checklist
 
     def build(self, sheet_id):
 
         logger.debug(f"Building checklist of {sheet_id}")
 
-        # достаем файл
+        # Достаем файл
+
         file = self.__google_client.open_by_key(sheet_id)
+        sheet = file.get_worksheet(0)
+        data = sheet.get_all_records()
+        logger.debug(f"Данные выгружены из документа")
 
-        # проходимся по первым 5 вкладкам, в надежде найти критерии хоть где то
-        for i in range(5):
+        if len(data) > 0 and "title" in data[0]:
+            logger.debug(f"Checklist data loaded")
+            return data
+        else:
+            logger.debug(f"This sheet has no records or wrong headers")
+            raise ValueError("No good checklist in this document")
 
-            sheet = file.get_worksheet(i)
-            if sheet is None:
-                break
-            # TODO add sheet check
-            data = sheet.get_all_records()
-            if len(data) > 0 and "title" in data[0]:
-                return data
-
-        raise ValueError("No good checklist in this document")
 
     def reload(self):
         self.__map = self._load_indices(self.__index_sheet)

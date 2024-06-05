@@ -1,6 +1,7 @@
 import os
 
 from fastapi import APIRouter, Depends
+from loguru import logger
 from starlette.responses import JSONResponse
 
 from gspread import SpreadsheetNotFound, GSpreadException
@@ -22,14 +23,16 @@ async def build_checklist(checklist_request: ChecklistRequest):
     """Возвращаем структурированный чеклист. Если sheet_id на док задана - используем его. Иначе используем название"""
     try:
         if checklist_request.sheet_id:
+            logger.debug("Генерируем чеклист по id документа")
             checklist = checklist_builder.build(checklist_request.sheet_id)
         elif checklist_request.task_name:
+            logger.debug("Генерируем чеклист по его названию")
             checklist = checklist_builder.build_by_task_name(checklist_request.task_name)
         else:
             return JSONResponse({"error": "task_name or sheet_id expected"}, status_code=400)
 
     # Если при загрузке произошла ошибка – вернем 400
-    except (GSpreadException, SpreadsheetNotFound) as error:
+    except (GSpreadException, SpreadsheetNotFound, ValueError) as error:
         return JSONResponse({"error": str(error)}, status_code=400)
 
     # Если мы искали по имени и не нашли такого чеклиста – вернем 404

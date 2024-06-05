@@ -10,6 +10,7 @@ from src.classes.sheet_pusher import SheetPusher
 
 # Достаем все конфиги
 import src.config as config
+from src.classes.wiki_ai_booster import WikiAIBooster
 from src.classes.wiki_loader import WikiLoader
 
 if config.OPENAI_API_KEY is None:
@@ -32,5 +33,8 @@ ai_client = AsyncOpenAI(api_key=config.OPENAI_API_KEY)
 # объект для генерации фидбека нейроночкой
 feedback_builder = AIFeedBackBuilder(ai_client, prompts_loader, sheet_pusher)
 
-# объекд для загрузки статей
+# объект для загрузки статей
 wiki_loader = WikiLoader(gc, wiki_sheet=config.SHEET_IDS["WIKI"])
+
+# Объект для докручивание статей с персонализацией
+wiki_ai_booster = WikiAIBooster(ai_client)

@@ -31,5 +31,6 @@ class WikiLoader:
                 logger.debug(f"Статья не найдена")
                 raise KeyError("Статья не найдена")
 
-        except (ValueError, AttributeError, IndexError):
-            raise ValueError(f"Не удалось загрузить статью по такому названию: {skill}")
+        except (ValueError, AttributeError, IndexError) as error:
+            logger.debug(f"Произошла ошибка {str(error)}")
+            raise ValueError(f"Не удалось загрузить статью по такому названию: {skill}, {str(error)}")
