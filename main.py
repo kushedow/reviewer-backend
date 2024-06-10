@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.requests import Request
+from starlette.responses import Response
 from starlette.staticfiles import StaticFiles
 
 from src.config import setup_cors
@@ -10,5 +13,16 @@ setup_cors(app)
 
 app.include_router(api_router)
 app.include_router(pages_router)
+
+
+class DisableCacheMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        response = await call_next(request)
+        if request.url.path.startswith("/static/"):
+            response.headers["Cache-Control"] = "no-store"
+        return response
+
+# Mount static files with custom middleware
+app.add_middleware(DisableCacheMiddleware)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

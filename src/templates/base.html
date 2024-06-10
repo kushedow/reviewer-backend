@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Skypro Explanation{% endblock %}</title>
+    <link rel="stylesheet" href="/static/sample.css?">
+
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript">{{ METRICA_CODE | safe }}</script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/97492095" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+
+</head>
+<body>
+    <div class="container">
+
+        {% block content %}
+        {% endblock %}
+
+    </div>
+</body>
+</html>

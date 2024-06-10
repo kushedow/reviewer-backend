@@ -118,3 +118,21 @@ class SheetPusher:
         logger.debug(f'Записываем {result} в табличку "Все обращения к ВИКИ"')
 
         return result
+
+    def push_wiki_rate(self, slug: str, grade: int, student_id: int = "", personalized: str = ""):
+
+        sheet_id = self.__sheet_ids["WIKI_RATES"]
+        document: Spreadsheet = self.__google_client.open_by_key(sheet_id)
+        sheet: Worksheet = document.get_worksheet(0)
+
+        current_time = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+        result: JSONResponse = sheet.append_row([
+            slug,
+            grade,
+            student_id,
+            current_time
+        ])
+
+        logger.debug(f'Записываем {result} в табличку "Все оценки к вики "')
+
+        return result

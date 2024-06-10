@@ -14,6 +14,7 @@ SHEET_IDS = {
     "SOFTSKILLS": "1O__0V3VvT6eFU_e7fRpfa5Bpc_v3dRXT3q15fU9sN9E",
     "WIKI": "1nZq1glJDQpoOCvu1WQWPBII9ifzgBzN1yhOnUCWfzbY",
     "WIKI_REQUESTS": "1mw0cIZz0HtLr_NKgU5Yx0UtPS5PaIxt0Rve9qqObv_A",
+    "WIKI_RATES": "1Kh4rWSjGzBLHFGP__cLJHM-d39xfm4thiVwSy2DDDfc",
 
 }
 
@@ -26,6 +27,20 @@ origins = [
     "http://localhost:10000",
 ]
 
+METRICA_CODE = """       
+       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+       m[i].l=1*new Date();
+       for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+       k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+       ym(97492095, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            webvisor:true
+       });
+"""
 
 def setup_cors(app):
     app.add_middleware(
@@ -35,3 +50,4 @@ def setup_cors(app):
         allow_methods=["*"],
         allow_headers=["*"],
     )
+

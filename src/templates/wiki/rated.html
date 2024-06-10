@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+    {{title}}
+
+{% endblock %}
+
+{% block content %}
+
+{{ article_text | safe }}
+
+    <div class="card">
+        <h4>Большое спасибо, ответ записан!</h4>
+        <p>Вы можете закрыть страницу или <a href="/explain/{{ slug }}?student_id={{ student_id }}">вернуться к статье</a></p>
+    </div>
+
+{% endblock %}
+
+
+

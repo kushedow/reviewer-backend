@@ -47,13 +47,13 @@ h6 {
   line-height: 1.5rem;
 }
 h1 {
-  font-size: 4.242rem;
-  line-height: 4.5rem;
+  font-size: 3rem;
+  line-height: 3.2rem;
   margin-top: 3rem;
 }
 h2 {
-  font-size: 2.828rem;
-  line-height: 3rem;
+  font-size: 2.228rem;
+  line-height: 2.5rem;
   margin-top: 3rem;
 }
 h3 {
@@ -83,10 +83,17 @@ table th {
 code {
   vertical-align: bottom;
 }
-/* Leading paragraph text */
-.lead {
-  font-size: 1.414rem;
+
+button {
+   cursor: pointer;
 }
+
+pre {
+    background-color: #efeff9;
+    padding: 20px;
+    border-radius: 4px;
+}
+
 /* Hug a the block above you */
 .hug {
   margin-top: 0;
@@ -95,4 +102,47 @@ code {
 .container {
   max-width: 700px;
   margin: 20px auto;
+}
+
+p code {
+    background-color: #eee;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.card {
+    margin-top: 24px;
+    background-color: #eee;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.card h4 {
+    margin-top: 0px;
+}
+
+.wiki-rate__form {
+    margin-top: 10px;
+}
+
+
+/*   BUTTONS   */
+
+
+
+.btn-primary {
+    background-color: #4669F4;
+    border: none;
+    color: white;
+    padding: 9px 15px;
+    border-radius: 50px;
+    font-size: 16px;
+}
+
+/*   TYPOGRAPHY    */
+
+
+/* Leading paragraph text */
+.lead {
+  font-size: 1.414rem;
 }

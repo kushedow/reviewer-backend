@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+    {{title}}
+
+{% endblock %}
+
+{% block content %}
+
+{{ article_text | safe }}
+
+{% include 'components/rate.html' %}
+
+{% endblock %}

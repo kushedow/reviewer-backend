@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from loguru import logger
 from starlette.responses import JSONResponse
 
@@ -8,7 +8,7 @@ from gspread import SpreadsheetNotFound, GSpreadException
 from openai import OpenAIError, PermissionDeniedError, RateLimitError, APIConnectionError
 from src.classes.prompts_loader import PromptException
 
-from src.dependencies import sheet_pusher, checklist_builder, prompts_loader, feedback_builder
+from src.dependencies import sheet_pusher, checklist_builder, prompts_loader, feedback_builder, wiki_loader
 
 from src.models.ai_request import AIRequest
 from src.models.checklist_report import ChecklistReport
@@ -57,6 +57,8 @@ async def refresh():
     """
     checklist_builder.reload()
     prompts_loader.reload()
+    wiki_loader.reload()
+
     return JSONResponse({"message": "Кэш промптов и чеклистов сброшен"}, status_code=200)
 
 
@@ -90,15 +92,13 @@ async def generate_motivation(ai_request: AIRequest):
 
 
 @router.post("/report", tags=["Report"])
-async def save_report(report: ChecklistReport):
-    """
-    Сохраняем отчет как ученик сделал домашку
-    :param report:
-    :return:
-    """
+async def save_report(report: ChecklistReport, background_tasks: BackgroundTasks):
+
     try:
+
         # делаем запись о закрытии тикета
-        sheet_pusher.push_activity_from_request(model=report, event="close")
+        background_tasks.add_task(sheet_pusher.push_activity_from_request, model=report, event="close")
+
         # делаем запись по критериям
         sheet_pusher.push_criteria_from_report(report=report)
 
