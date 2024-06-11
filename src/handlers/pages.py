@@ -39,22 +39,29 @@ async def explain(request: Request, slug: str, student_id: str = None):
 
 # PROTOTYPE
 
-@router.get("/explain/{skill}/personalize", tags=["Explain"])
-async def explain(request: Request, skill: str, student_id: str = None):
+@router.get("/explain/{slug}/personalize", tags=["Explain"])
+async def explain(request: Request, slug: str,  profession: str = Query(""),  student_id: str = Query(""),):
+
     logger.debug("Запущена загрузка статьи по скиллу c персонализацией")
 
-    article_raw = wiki_loader.load_wiki_by_skill(skill)
-    article_personalized = await wiki_ai_booster.improve(article_raw)
+    article = wiki_loader.get(slug)
+    article_raw = article.article
+    article_personalized = await wiki_ai_booster.improve(article_raw, profession)
 
     logger.debug(article_personalized)
 
     article_text = markdown2.markdown(article_personalized, extras=["code-friendly", "fenced-code-blocks"])
 
-    context = {"article_text": article_text, "skill": skill, "METRICA_CODE": METRICA_CODE}
+    context = {
+        "title": article.title,
+        "article_text": article_text,
+        "student_id": student_id,
+        "slug": slug,
+        "METRICA_CODE": METRICA_CODE,
+        "request": request
+    }
 
-    context.update({"request": request})
-
-    return templates.TemplateResponse("wiki/article.html", context)
+    return templates.TemplateResponse("wiki/personal-article.html", context)
 
 
 @router.get("/explain/{slug}/rate", tags=["Explain"])
