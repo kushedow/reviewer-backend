@@ -1,11 +1,5 @@
 from openai import  AsyncClient
 
-PERSONAL_PROMPT = "Перепиши эту статью на русском языке для ученика учетом того, что:" \
-                  "Ее уровень английского – низкий" \
-                  "Она работает домохозяйкой с 2 детьми, примеры нужно заменить, взять из ее профессиональной области" \
-                  "Ей 23 года." \
-                  "Статья:" \
-                  "" \
 
 class WikiAIBooster:
 
@@ -25,10 +19,14 @@ class WikiAIBooster:
 
         return response
 
-    async def improve(self, article_content: str, student_data=None):
+    async def improve(self, article_content: str, profession="Неизвестна"):
 
-        if student_data is None:
-            student_data = dict()
+
+        PERSONAL_PROMPT = "Перепиши эту статью на русском языке для ученика учетом того, что:" \
+                  "Уровень английского – низкий" \
+                  f"Профессия:  {profession}, примеры нужно заменить, взять из ее профессиональной области" \
+                  "Статья:"
+
 
         prompt = PERSONAL_PROMPT + article_content
         result = await self._make_request(prompt)

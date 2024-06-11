@@ -28,7 +28,8 @@ async def explain(request: Request, slug: str, student_id: str = None):
             "student_id": student_id,
             "slug": slug,
             "METRICA_CODE": METRICA_CODE,
-            "request": request
+            "request": request,
+            "personalized": "false",
         }
 
         return templates.TemplateResponse("wiki/article.html", context)
@@ -58,7 +59,8 @@ async def explain(request: Request, slug: str,  profession: str = Query(""),  st
         "student_id": student_id,
         "slug": slug,
         "METRICA_CODE": METRICA_CODE,
-        "request": request
+        "request": request,
+        "personalized": "true",
     }
 
     return templates.TemplateResponse("wiki/personal-article.html", context)

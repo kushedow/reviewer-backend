@@ -1,18 +1,16 @@
 <div class="card personalize-offer">
 
-    <p>Эта версия статьи проверена наставником, но мы можем собрать специальную версию с помощью ИИ </p>
+    <p>Эта статья проверена наставником. А еще, чтобы вам было проще разобраться, мы можем объяснить с помощью ИИ эту тему так, как будто вы ... </p>
 
-    <details>
-      <summary class="personalize-offer__trigger"> 🪄 Объясните как будто я...</summary>
-        <form action="">
-            <button type="submit" name="" value="Водитель">Водитель</button>
-            <button type="submit" name="" value="Водитель">Бухгалтер</button>
-            <button type="submit" name="" value="Водитель">Домохозяйка</button>
-            <button type="submit" name="" value="Водитель">Логист</button>
-            <button type="submit" name="" value="Водитель">Математик</button>
-            <button type="submit" name="" value="Водитель">Школьник</button>
-        </form>
-    </details>
+    <a href="/explain/{{slug}}/personalize?profession=повар" class="btn btn-secondary btn-sm">Повар</a>
+    <a href="/explain/{{slug}}/personalize?profession=водитель" class="btn btn-secondary btn-sm">Водитель</a>
+    <a href="/explain/{{slug}}/personalize?profession=Математик" class="btn btn-secondary btn-sm">Математик</a>
 
+    <form action="/explain/{{slug}}/personalize" method="get" class="personalize-offer__form">
+        <input type="text" name="profession" placeholder="Ваше занятие" class="form-control">
+        <input type="submit" value="Объяснить!" class="btn btn-primary">
+    </form>
+
+    <p> Загрузка займет несколько секунд. Спасибо за терпение! </p>
 
 </div>

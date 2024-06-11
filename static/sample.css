@@ -49,7 +49,7 @@ h6 {
 h1 {
   font-size: 3rem;
   line-height: 3.2rem;
-  margin-top: 3rem;
+  margin-top: 2rem;
 }
 h2 {
   font-size: 2.228rem;
@@ -133,16 +133,35 @@ p code {
     margin-top: 10px;
 }
 
-
 /*    BUTTONS   */
+
+.btn {
+ border: none;
+    color: white;
+    padding: 9px 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    text-decoration: none;
+    display: inline-block;
+}
 
 .btn-primary {
     background-color: #4669F4;
-    border: none;
-    color: white;
-    padding: 9px 15px;
-    border-radius: 50px;
-    font-size: 16px;
+}
+
+.btn-secondary {
+    background-color: #444;
+}
+
+
+/*     FORM     */
+
+.form-control {
+   padding: 9px 15px;
+   border-radius: 8px;
+   background-color: #fff;
+   font-size: 16px;
+   border: none;
 }
 
 /*   TYPOGRAPHY    */
@@ -150,4 +169,11 @@ p code {
 /* Leading paragraph text */
 .lead {
   font-size: 1.414rem;
+}
+
+form.personalize-offer__form {
+    display: inline-block;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    margin-left: 16px;
 }

@@ -8,6 +8,11 @@
 
 {% block content %}
 
+<div class="card">
+    Эта статья сгенерирована с помощью ИИ под ваш запрос, вы можете
+    <a href="/explain/{{slug}}?student_id={{student_id}}">вернуться к версии, которая проверена наставником.</a>
+</div>
+
 {{ article_text | safe }}
 
 {% include 'components/rate.html' %}

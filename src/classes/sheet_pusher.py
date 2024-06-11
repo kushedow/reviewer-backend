@@ -130,6 +130,7 @@ class SheetPusher:
             slug,
             grade,
             student_id,
+            personalized,
             current_time
         ])
 
