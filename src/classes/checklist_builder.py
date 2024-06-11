@@ -1,54 +1,71 @@
-from gspread import Client
+import asyncio
+
+from gspread import GSpreadException, SpreadsheetNotFound
+from gspread_asyncio import AsyncioGspreadClientManager, AsyncioGspreadClient, AsyncioGspreadWorksheet, \
+    AsyncioGspreadSpreadsheet
 from loguru import logger
 
+from src.classes.abc_gspread_loader import ABCGspreadLoader
+from src.models.checklist import Checklist, ChecklistStatusEnum
 
-class ChecklistBuilder:
 
-    def __init__(self, g_client, index_sheet):
-        self.__google_client: Client = g_client
+class ChecklistBuilder(ABCGspreadLoader):
+
+    def __init__(self, async_manager, index_sheet):
+
+        self.__async_manager: AsyncioGspreadClientManager = async_manager
+        self.__async_client: AsyncioGspreadClient | None = None
         self.__index_sheet = index_sheet
-        self.__map = self._load_indices(index_sheet)
+        self.__cache: dict[str, Checklist] = {}
 
-    def _load_indices(self, index_sheet_id):
+    async def _load_indices(self):
 
-        file = self.__google_client.open_by_key(index_sheet_id)
-        sheet = file.worksheet("index")
-        records = sheet.get_all_records()
-        lessons_to_sheets = {record["lesson"]: record["sheet_id"] for record in records}
-        return lessons_to_sheets
+        file = await self.__async_client.open_by_key(self.__index_sheet)
+        sheet = await file.worksheet("index")
+        records = await sheet.get_all_records()
+        self.__cache = {record["lesson"]: Checklist(**record) for record in records}
 
-    def build_by_task_name(self, task_name):
+    async def _load_one_checklist(self, index: int, checklist: Checklist):
 
-        task_name = task_name.strip()
-        task_name = task_name.replace("&nbsp;", " ")
-        task_name = task_name.replace("  ", " ")
+        try:
 
-        sheet_id = self.__map.get(task_name)
+            file: AsyncioGspreadSpreadsheet = await self.__async_client.open_by_key(checklist.sheet_id)
+            sheet: AsyncioGspreadWorksheet = await file.get_sheet1()
+            data: list[dict] = await sheet.get_all_records()
 
-        if sheet_id is None:
-            raise KeyError("No checklist for this lesson name")
-        checklist = self.build(sheet_id)
+            if len(data) == 0 or "title" not in data[0].keys():
+                raise KeyError
 
-        return checklist
+            checklist.body = data
+            checklist.status = ChecklistStatusEnum.OK
+            logger.debug(f"Processed checklist {index} of {len(self.__cache)}")
 
-    def build(self, sheet_id):
+        except (GSpreadException, SpreadsheetNotFound, KeyError):
+            logger.error(f"Checklist {checklist.lesson} {checklist.sheet_id} loading error")
+            checklist.status = ChecklistStatusEnum.ERROR
 
-        logger.debug(f"Building checklist of {sheet_id}")
+    async def _load_checklists(self):
 
-        # Достаем файл
+        for index, checklist in enumerate(self.__cache.values(), start=1):
+            await self._load_one_checklist(index, checklist)
 
-        file = self.__google_client.open_by_key(sheet_id)
-        sheet = file.get_worksheet(0)
-        data = sheet.get_all_records()
-        logger.debug(f"Данные выгружены из документа")
+    def get(self, lesson_name) -> Checklist | None:
+        lesson_name = lesson_name.strip().rstrip(".")
+        return self.__cache.get(lesson_name)
 
-        if len(data) > 0 and "title" in data[0]:
-            logger.debug(f"Checklist data loaded")
-            return data
-        else:
-            logger.debug(f"This sheet has no records or wrong headers")
-            raise ValueError("No good checklist in this document")
+    def find(self, key, value) -> Checklist | None:
+        for checklist in self.__cache.values():
+            if getattr(checklist, key) == value:
+                return checklist
 
+    async def reload(self):
 
-    def reload(self):
-        self.__map = self._load_indices(self.__index_sheet)
+        self.__async_client = await self.__async_manager.authorize()
+
+        logger.info(f"{self.__class__.__name__}: Caching started")
+
+        await self._load_indices()
+        await self._load_checklists()
+
+        logger.info(f"{self.__class__.__name__}: Caching completed")
+

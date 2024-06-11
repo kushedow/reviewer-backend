@@ -1,6 +1,11 @@
 import os
 from fastapi.middleware.cors import CORSMiddleware
 
+import asyncio
+import gspread_asyncio
+# from google-auth package
+from google.oauth2.service_account import Credentials
+
 CREDENTIALS_PATH = os.environ.get("CREDENTIALS_PATH")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 
@@ -51,3 +56,13 @@ def setup_cors(app):
         allow_headers=["*"],
     )
 
+
+def get_creds():
+    # To obtain a service account JSON file, follow these steps:
+    creds = Credentials.from_service_account_file(CREDENTIALS_PATH)
+    scoped = creds.with_scopes([
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ])
+    return scoped

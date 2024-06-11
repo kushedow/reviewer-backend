@@ -1,10 +1,11 @@
 from gspread import Client
 from loguru import logger
 
+from src.classes.abc_gspread_loader import ABCGspreadLoader
 from src.models.wiki_article import WikiArticle
 
 
-class WikiLoader:
+class WikiLoader(ABCGspreadLoader):
 
     SKILL_COLUMN = 2
     __cache = {}
@@ -13,13 +14,8 @@ class WikiLoader:
 
         self.__google_client: Client = g_client
         self.__wiki_sheet: str = wiki_sheet
-        document = self.__google_client.open_by_key(self.__wiki_sheet)
-        self.__worksheet = document.get_worksheet(0)
 
-        # Загружаем и кешируем все статьи
-        self.reload()
-
-    def load_wiki_by_skill(self, slug):
+    def get(self, slug):
 
         article: WikiArticle = self.__cache.get(slug)
 
@@ -29,9 +25,19 @@ class WikiLoader:
 
         return article
 
+    def find(self, key: str, value: str | int | float):
+        value = value.strip().rstrip(".")
+        for article in self.__cache.values():
+            if getattr(article, key).strip().rstrip(".") == value:
+                return article
+
     def reload(self):
 
-        sheet = self.__worksheet
+        document =  self.__google_client.open_by_key(self.__wiki_sheet)
+        sheet = document.get_worksheet(0)
+
+        logger.info(f"{self.__class__.__name__}: Caching started")
         records = sheet.get_all_records()
         self.__cache = {record["slug"]: WikiArticle(**record) for record in records}
+        logger.info(f"{self.__class__.__name__}: Caching completed")
 

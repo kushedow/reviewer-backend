@@ -20,7 +20,7 @@ async def explain(request: Request, slug: str, student_id: str = None):
 
     try:
 
-        article = wiki_loader.load_wiki_by_skill(slug)
+        article = wiki_loader.get(slug)
 
         context = {
             "title": article.title,

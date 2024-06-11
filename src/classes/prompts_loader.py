@@ -12,11 +12,11 @@ class PromptsLoader:
         self.__sheet_id: str = sheet_id
         self.__worksheet: Worksheet | None = None
 
-        self.reload()
-
     def reload(self) -> None:
+        logger.info(f"{self.__class__.__name__}: Caching started")
         file = self.__google_client.open_by_key(self.__sheet_id)
         self.__worksheet = file.get_worksheet(0)
+        logger.info(f"{self.__class__.__name__}: Caching completed")
 
     def list(self) -> list[str]:
         """

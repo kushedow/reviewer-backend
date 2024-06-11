@@ -43,3 +43,4 @@ node_modules/
 /credentials.json
 /foo_run.py
 /samples/checklist.json
+/tests/test_wiki.py

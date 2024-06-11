@@ -8,7 +8,7 @@ from gspread import SpreadsheetNotFound, GSpreadException
 from openai import OpenAIError, PermissionDeniedError, RateLimitError, APIConnectionError
 from src.classes.prompts_loader import PromptException
 
-from src.dependencies import sheet_pusher, checklist_builder, prompts_loader, feedback_builder, wiki_loader
+from src.dependencies import sheet_pusher, checklist_builder, prompts_loader, feedback_builder, skillset
 
 from src.models.ai_request import AIRequest
 from src.models.checklist_report import ChecklistReport
@@ -20,46 +20,42 @@ router = APIRouter()
 
 @router.post("/checklist", tags=["Checklist"])
 async def build_checklist(checklist_request: ChecklistRequest):
-    """Возвращаем структурированный чеклист. Если sheet_id на док задана - используем его. Иначе используем название"""
+    """
+    Возвращаем структурированный чеклист.
+    Если sheet_id на док задана - используем его.
+    Иначе используем название
+    """
+
+    if checklist_request.sheet_id:
+        logger.debug("Генерируем чеклист по id документа")
+        checklist = checklist_builder.find("sheet_id", checklist_request.sheet_id)
+        if checklist is None:
+            return JSONResponse({"error": "checklist not found"}, status_code=404)
+
+    elif checklist_request.task_name:
+        logger.debug("Генерируем чеклист по его названию")
+        checklist = checklist_builder.get(checklist_request.task_name)
+        if checklist is None:
+            return JSONResponse({"error": "checklist not found"}, status_code=404)
+
+    else:
+        return JSONResponse({"error": "task_name or sheet_id expected"}, status_code=400)
+
+    # делаем запись об открытии тикета
+
     try:
-        if checklist_request.sheet_id:
-            logger.debug("Генерируем чеклист по id документа")
-            checklist = checklist_builder.build(checklist_request.sheet_id)
-        elif checklist_request.task_name:
-            logger.debug("Генерируем чеклист по его названию")
-            checklist = checklist_builder.build_by_task_name(checklist_request.task_name)
-        else:
-            return JSONResponse({"error": "task_name or sheet_id expected"}, status_code=400)
-
-    # Если при загрузке произошла ошибка – вернем 400
-    except (GSpreadException, SpreadsheetNotFound, ValueError) as error:
-        return JSONResponse({"error": str(error)}, status_code=400)
-
-    # Если мы искали по имени и не нашли такого чеклиста – вернем 404
-    except KeyError as error:
-        return JSONResponse({"error": str(error)}, status_code=404)
-
-    try:
-        # делаем запись об открытии тикета
         sheet_pusher.push_activity_from_request(model=checklist_request, event="open")
-
-    # Если не удалось записать отчет об открытии тикета – выкидываем 500
     except GSpreadException as error:
         return JSONResponse({"error": str(error)}, status_code=500)
 
-    return JSONResponse(checklist, status_code=200)
+    if checklist.status.value == "OK":
 
+        # досыпаем дополнительные поля
+        skillset.enrich(checklist)
 
-@router.get("/refresh", tags=["Utils"])
-async def refresh():
-    """
-    Сбрасывает кэш и заново перегружает критерии и промпты
-    """
-    checklist_builder.reload()
-    prompts_loader.reload()
-    wiki_loader.reload()
-
-    return JSONResponse({"message": "Кэш промптов и чеклистов сброшен"}, status_code=200)
+        return JSONResponse(checklist.body, status_code=200)
+    else:
+        return JSONResponse({"error": f"checklist found but status is {checklist.status.value}"}, status_code=500)
 
 
 @router.post("/generate-motivation", tags=["AI"])
@@ -93,7 +89,6 @@ async def generate_motivation(ai_request: AIRequest):
 
 @router.post("/report", tags=["Report"])
 async def save_report(report: ChecklistReport, background_tasks: BackgroundTasks):
-
     try:
 
         # делаем запись о закрытии тикета
@@ -127,12 +122,6 @@ async def save_soft_skills_report(report: SoftskillsReport):
 @router.get("/prompts", tags=["AI"])
 async def list_prompts():
     return prompts_loader.list()
-
-
-@router.get("/version", tags=["Utility"])
-async def get_backend_version():
-    version = os.environ.get("FRONTEND_MIN_VERSION", "0.0")
-    return {"frontend__min_version": version}
 
 
 @router.get("/prompts/{name}", tags=["AI"])
