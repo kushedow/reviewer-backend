@@ -1,14 +1,11 @@
-import asyncio
-import os
 import gspread
 import gspread_asyncio
-from google.oauth2.service_account import Credentials
 
 from openai import AsyncOpenAI
 
 from src.classes.ai_feedback_builder import AIFeedBackBuilder
 from src.classes.checklist_builder import ChecklistBuilder
-from src.classes.prompts_loader import PromptsLoader, PromptException
+from src.classes.prompts_loader import PromptsLoader
 from src.classes.sheet_pusher import SheetPusher
 
 # Достаем все конфиги
