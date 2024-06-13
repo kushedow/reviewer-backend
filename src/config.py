@@ -1,15 +1,27 @@
 import os
 from fastapi.middleware.cors import CORSMiddleware
 
-import asyncio
-import gspread_asyncio
-# from google-auth package
 from google.oauth2.service_account import Credentials
 
 CREDENTIALS_PATH = os.environ.get("CREDENTIALS_PATH")
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
+SERVER = os.environ.get("SERVER")
 
-SHEET_IDS = {
+DEV_SHEET_IDS = {
+
+    "CRITERIA": "13VHBZBTfzb3vl6Pwdl4OEIml-F_swo5CFnQ7wKINxyI",
+    "ACTIVITIES": "1r6cwlD9LreT7en254qAZjSA1D-T3PaqMYuut5rJQuKY",
+    "GENERATIONS": "1apLzXvrF3QSK05EHxwQZyu4HVjMQ9tHM29tWmFQacYQ",
+    "INDICES": "13rowgYU8iGXZRUVBAEBO3d-jncm8agcQuIdI-k-gpL4",
+    "PROMPTS": "1NT7oA8yoeJYJhbYkkXM-LKfS5KY3wTaZlgiHeiUaUhU",
+    "SOFTSKILLS": "1aKjwrfc7C3KbRMpMrLiTc-OdSAqrIy04YEbeWhIqinc",
+    "WIKI": "1Yv6wC96HlOWWN-dlrL7HR6IGSbI9qkSRhQ21JeWKSLM",
+    "WIKI_REQUESTS": "1WHwmM_779SQ_h8otZyWGAqjgxkVlrnm40SPgn867ZuM",
+    "WIKI_RATES": "15z1XWNxiqCqB1m7-An6eruX4DSj7HGGB0fleTfiAmS8",
+
+}
+
+PROD_SHEET_IDS = {
 
     "CRITERIA": "1hX_6SQTRp3iprm400GzAq6ImX_8EwtygYfKudnqI2OA",
     "ACTIVITIES": "1SkCYQkrRdsApiaVDCeHJ-nf5ro9rRaFGmKuCciOyzNA",
@@ -23,8 +35,9 @@ SHEET_IDS = {
 
 }
 
-ALLOWED_FILETYPES = (".js", ".java", ".py", ".class", ".gitignore")
+SHEET_IDS = PROD_SHEET_IDS if SERVER == "prod" else DEV_SHEET_IDS
 
+ALLOWED_FILETYPES = (".js", ".java", ".py", ".class", ".gitignore")
 
 origins = [
     "https://student-care.sky.pro",
@@ -46,6 +59,7 @@ METRICA_CODE = """
             webvisor:true
        });
 """
+
 
 def setup_cors(app):
     app.add_middleware(

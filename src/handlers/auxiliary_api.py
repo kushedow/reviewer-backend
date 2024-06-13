@@ -1,6 +1,6 @@
 import os
 
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks
 from loguru import logger
 from starlette.responses import JSONResponse
 

@@ -1,21 +1,37 @@
-import os
-
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks
 from loguru import logger
 from starlette.responses import JSONResponse
 
-from gspread import SpreadsheetNotFound, GSpreadException
+from gspread import GSpreadException
 from openai import OpenAIError, PermissionDeniedError, RateLimitError, APIConnectionError
 from src.classes.prompts_loader import PromptException
 
 from src.dependencies import sheet_pusher, checklist_builder, prompts_loader, feedback_builder, skillset
 
 from src.models.ai_request import AIRequest
+from src.models.checklist import Checklist, ChecklistStatusEnum
 from src.models.checklist_report import ChecklistReport
 from src.models.checklist_request import ChecklistRequest
 from src.models.softskills_report import SoftskillsReport
 
 router = APIRouter()
+
+
+@router.post("/checklist/full", tags=["Checklist Full"])
+async def build_checklist_full(checklist_request: ChecklistRequest):
+    logger.debug("Генерируем полный чеклист по его названию")
+    checklist: Checklist = checklist_builder.get(checklist_request.task_name)
+
+    if checklist.status == ChecklistStatusEnum.ERROR:
+        return JSONResponse(
+            {"error": "An error occurred on server while parsing the checklist"}, status_code=500
+        )
+    if not checklist.is_ready:
+        return JSONResponse({"error": "Checklist is not ready"}, status_code=404)
+    if checklist is None:
+        return JSONResponse({"error": "Checklist not found"}, status_code=404)
+
+    return checklist.model_dump()
 
 
 @router.post("/checklist", tags=["Checklist"])
@@ -114,7 +130,7 @@ async def save_soft_skills_report(report: SoftskillsReport):
         sheet_pusher.push_softskills_from_request(report)
 
     except GSpreadException as error:
-        return JSONResponse({"error": error}, status_code=400)
+        return JSONResponse({"error": str(error)}, status_code=400)
 
     return JSONResponse({"message": "success"}, status_code=201)
 
