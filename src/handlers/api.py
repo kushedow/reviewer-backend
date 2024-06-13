@@ -1,10 +1,10 @@
 import os
 
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks
 from loguru import logger
 from starlette.responses import JSONResponse
 
-from gspread import SpreadsheetNotFound, GSpreadException
+from gspread import GSpreadException
 from openai import OpenAIError, PermissionDeniedError, RateLimitError, APIConnectionError
 from src.classes.prompts_loader import PromptException
 
@@ -114,7 +114,7 @@ async def save_soft_skills_report(report: SoftskillsReport):
         sheet_pusher.push_softskills_from_request(report)
 
     except GSpreadException as error:
-        return JSONResponse({"error": error}, status_code=400)
+        return JSONResponse({"error": str(error)}, status_code=400)
 
     return JSONResponse({"message": "success"}, status_code=201)
 

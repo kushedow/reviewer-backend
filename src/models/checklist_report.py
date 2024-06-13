@@ -34,7 +34,7 @@ class ChecklistReport(BaseModel):
     """Модель репорта по чеклисту, который отправляет плагин серверу """
     ticket_id: int = Field(examples=[600111])
     student_id: int = Field(default=0, examples=[111222333])
-    student_full_name: str = Field(examples=["Глеб Кушедов"])
+    student_full_name: str = Field(default='', examples=["Глеб Кушедов"])
     mentor_full_name: str = Field(examples=["Слава Леонтьев"])
     stream_name: str = Field(examples=["Python 01"])
     task_name: str = Field(default='', examples=["Тестовое задание"])

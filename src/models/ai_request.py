@@ -15,16 +15,18 @@ feedback_body = """
 ✅⠀При нулевом количестве товаров программа продолжает работу⠀
 """.strip()
 
-class AIRequest(BaseModel):
 
+class AIRequest(BaseModel):
     # Обязательные
     ticket_id: int = Field(description="ID проверяемого тикета", examples=[111111])
-    student_full_name: str = Field(description="Имя ученика, чью работу мы проверяем", examples=["Глеб Кушедов"])
     mentor_full_name: str = Field(description="Имя наставника, на которого назначен тикет", examples=["Слава Леонтьев"])
-    stream_name: str = Field(description="Название потока, на котором ученик", examples=["Тестовый поток"])
 
     # Опциональные
+    student_full_name: str = Field(default='', description="Имя ученика, чью работу мы проверяем",
+                                   examples=["Глеб Кушедов"])
+    stream_name: str = Field(default='', description="Название потока, на котором ученик", examples=["Тестовый поток"])
+
     prompt_name: str = Field(default='', description="Название промпта из таблички с промптами", examples=["NOAI"])
     feedback_body: str = Field(default='', description="Составленная ОС для ученика", examples=[feedback_body])
-    task_name: str = Field(default='', description="Название задания, которое мы проверяем", examples=["Тестовое задание 1"])
-
+    task_name: str = Field(default='', description="Название задания, которое мы проверяем",
+                           examples=["Тестовое задание 1"])

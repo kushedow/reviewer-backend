@@ -6,6 +6,7 @@ from openai import AsyncOpenAI
 from src.classes.ai_feedback_builder import AIFeedBackBuilder
 from src.classes.checklist_builder import ChecklistBuilder
 from src.classes.prompts_loader import PromptsLoader
+from src.classes.sheet_loader import SheetLoader
 from src.classes.sheet_pusher import SheetPusher
 
 # Достаем все конфиги
@@ -22,10 +23,13 @@ gc = gspread.service_account(filename=config.CREDENTIALS_PATH)
 
 async_gspread_manager = gspread_asyncio.AsyncioGspreadClientManager(config.get_creds)
 
-#  объект для отправки отчетов в гуглдоки
+# объект для отправки отчетов в Google Sheets
 sheet_pusher = SheetPusher(gc, config.SHEET_IDS)
 
-# объект для сборки критериев из таблиц
+# объект для проверки записанных данных в Google Sheets
+sheet_loader = SheetLoader(gc, config.SHEET_IDS)
+
+# объект для сборки критериев из Google Sheets
 checklist_builder = ChecklistBuilder(async_gspread_manager, config.SHEET_IDS["INDICES"])
 
 # объект для загрузки промптов
@@ -46,8 +50,8 @@ wiki_ai_booster = WikiAIBooster(ai_client)
 # Создаем скиллсет, который связывает чеклисты и навыки в вики
 skillset = SkillSet(wiki_loader, checklist_builder)
 
-async def reload_cache():
 
+async def reload_cache():
     wiki_loader.reload()
     prompts_loader.reload()
     await checklist_builder.reload()

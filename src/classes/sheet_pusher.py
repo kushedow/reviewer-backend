@@ -1,7 +1,7 @@
 import datetime
+from typing import Any, MutableMapping
 
 from gspread import Client, Worksheet, Spreadsheet
-from gspread.worksheet import JSONResponse
 from loguru import logger
 from pydantic import BaseModel
 
@@ -16,75 +16,73 @@ class SheetPusher:
         self.__google_client: Client = g_client
         self.__sheet_ids: dict[str, str] = sheet_ids
 
-    def push_criteria_from_report(self, report: ChecklistReport):
+    def __get_worksheet(self, sheet_name: str, worksheet_name: str | None = None) -> Worksheet:
+        sheet_id = self.__sheet_ids[sheet_name]
+        sheet: Spreadsheet = self.__google_client.open_by_key(sheet_id)
+        if worksheet_name:
+            return sheet.worksheet(worksheet_name)
+        else:
+            return sheet.get_worksheet(0)
 
-        # собираем объект, чтобы добавить в табличку с отчетом
+    @staticmethod
+    def __get_current_time() -> str:
+        return datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
 
+    def push_criteria_from_report(self, report: ChecklistReport) -> MutableMapping[str, Any]:
+        """ Push checklist reports to CRITERIA google sheet """
         rows_to_push: list = []
 
         for criteria in report.checklist_data.values():
             data_to_push = {
-                "ticket_id": report.ticket_id,
+                "id": report.ticket_id,
                 "student_id": report.student_id,
-                "title": criteria.get("title"),
+                "criteria_name": criteria.get("title"),
                 "grade": criteria.get("grade"),
-                "student_full_name": report.student_full_name,
                 "mentor_full_name": report.mentor_full_name,
                 "stream_name": report.stream_name,
-                "task_name": report.task_name,
+                "lesson": report.task_name,
                 "step": criteria.get("step"),
                 "skill": criteria.get("skill"),
                 "note": criteria.get("note")
             }
-
-            logger.debug("Adding criteria report", value=data_to_push)
+            logger.debug("Добавляем запись в табличку критериев", value=data_to_push)
             rows_to_push.append(list(data_to_push.values()))
 
-        sheet_id = self.__sheet_ids["CRITERIA"]
-        sheet: Spreadsheet = self.__google_client.open_by_key(sheet_id)
-        worksheet: Worksheet = sheet.worksheet("criteria")
+        worksheet = self.__get_worksheet(sheet_name="CRITERIA", worksheet_name="criteria")
         result = worksheet.append_rows(rows_to_push)
         return result
 
-    def push_ai_generation_from_request(self, model: AIRequest, output_text):
-
-        sheet_id = self.__sheet_ids["GENERATIONS"]
-        document: Spreadsheet = self.__google_client.open_by_key(sheet_id)
-        sheet: Worksheet = document.get_worksheet(0)
-
-        created_at = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        result: JSONResponse = sheet.append_row([
+    def push_ai_generation_from_request(self, model: AIRequest, output_text) -> MutableMapping[str, Any]:
+        """ Push AI generation report to GENERATIONS google sheet """
+        worksheet = self.__get_worksheet(sheet_name="GENERATIONS")
+        created_at = self.__get_current_time()
+        result = worksheet.append_row([
             created_at,
             model.ticket_id,
             model.mentor_full_name,
             model.feedback_body,
             output_text
         ])
-
+        logger.debug(f"Записываем генерацию ИИ в табличку генерации")
         return result
 
-    def push_activity_from_request(self, model: BaseModel, event=""):
-
-        sheet_id = self.__sheet_ids["ACTIVITIES"]
-        document: Spreadsheet = self.__google_client.open_by_key(sheet_id)
-        sheet: Worksheet = document.get_worksheet(0)
-        current_time = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        result: JSONResponse = sheet.append_row([
+    def push_activity_from_request(self, model: BaseModel, event="") -> MutableMapping[str, Any]:
+        """ Push activity report to ACTIVITIES google sheet """
+        worksheet = self.__get_worksheet(sheet_name="ACTIVITIES")
+        current_time = self.__get_current_time()
+        result = worksheet.append_row([
             current_time,
             model.ticket_id,
             model.mentor_full_name,
             event
         ])
-
+        logger.debug(f"Записываем эвент '{event}' в табличку активностей")
         return result
 
-    def push_softskills_from_request(self, report: SoftskillsReport):
-
-        sheet_id = self.__sheet_ids["SOFTSKILLS"]
-
-        document: Spreadsheet = self.__google_client.open_by_key(sheet_id)
-        worksheet: Worksheet = document.get_worksheet(0)
-        current_time = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    def push_softskills_from_request(self, report: SoftskillsReport) -> MutableMapping[str, Any]:
+        """ Push softskills report to SOFTSKILLS google sheet """
+        worksheet = self.__get_worksheet(sheet_name="SOFTSKILLS")
+        current_time = self.__get_current_time()
         rows_to_push = []
 
         for one_skill, one_value in report.skills.items():
@@ -103,37 +101,30 @@ class SheetPusher:
         result = worksheet.append_rows(rows_to_push)
         return result
 
-    def push_save_request_to_wiki(self, student_id: str, skill: str):
-        """ Save student request to WIKI_REQUESTS google sheet """
-
-        sheet_id = self.__sheet_ids["WIKI_REQUESTS"]
-        document: Spreadsheet = self.__google_client.open_by_key(sheet_id)
-        sheet: Worksheet = document.get_worksheet(0)
-        current_time = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        result: JSONResponse = sheet.append_row([
+    def push_save_request_to_wiki(self, student_id: str, skill: str) -> MutableMapping[str, Any]:
+        """ Push student request to WIKI_REQUESTS google sheet """
+        worksheet = self.__get_worksheet(sheet_name="WIKI_REQUESTS")
+        current_time = self.__get_current_time()
+        result = worksheet.append_row([
             current_time,
             student_id,
             skill
         ])
-        logger.debug(f'Записываем {result} в табличку "Все обращения к ВИКИ"')
-
+        logger.debug(f'Записываем запрос студента в табличку "Все обращения к ВИКИ"')
         return result
 
-    def push_wiki_rate(self, slug: str, grade: int, student_id: int = "", personalized: str = ""):
-
-        sheet_id = self.__sheet_ids["WIKI_RATES"]
-        document: Spreadsheet = self.__google_client.open_by_key(sheet_id)
-        sheet: Worksheet = document.get_worksheet(0)
-
-        current_time = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
-        result: JSONResponse = sheet.append_row([
+    def push_wiki_rate(
+            self, slug: str, grade: int, student_id: int = "", personalized: str = ""
+    ) -> MutableMapping[str, Any]:
+        """ Push student rate to WIKI_RATES google sheet """
+        worksheet = self.__get_worksheet(sheet_name="WIKI_RATES")
+        current_time = self.__get_current_time()
+        result = worksheet.append_row([
             slug,
-            grade,
             student_id,
+            grade,
             personalized,
             current_time
         ])
-
-        logger.debug(f'Записываем {result} в табличку "Все оценки к вики "')
-
+        logger.debug(f'Записываем оценку студента в табличку "Все оценки к вики "')
         return result

@@ -35,7 +35,7 @@ PROD_SHEET_IDS = {
 
 }
 
-SHEET_IDS = DEV_SHEET_IDS if SERVER == "dev" else PROD_SHEET_IDS
+SHEET_IDS = PROD_SHEET_IDS if SERVER == "prod" else DEV_SHEET_IDS
 
 ALLOWED_FILETYPES = (".js", ".java", ".py", ".class", ".gitignore")
 
