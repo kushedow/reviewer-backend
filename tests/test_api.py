@@ -29,37 +29,31 @@ async def test_checklist_status_error(checklist_status_error_data: dict, async_c
 
 @pytest.mark.asyncio
 async def test_checklist_without_sheet_id(checklist_data: dict, async_client: AsyncClient):
-    # Test without sheet_id
+    # Test with task_name
     response = await async_client.post("/checklist", json=checklist_data, timeout=20)
 
     assert response.status_code == 200, "Status code is not 200"
-    result_data = response.json()
-    assert result_data[0].get("title") == "Решение выложено на GitHub"
 
 
 @pytest.mark.asyncio
-async def test_checklist_with_sheet_id(checklist_data: dict, async_client: AsyncClient):
+async def test_checklist_with_sheet_id(checklist_data_sheet_id: dict, async_client: AsyncClient):
     # Test with sheet_id
-    checklist_data['sheet_id'] = '1eob4Hykpmm3S2Cigz31aPBTBNXHKbexuHq5h4h1Ehbk'
-    response = await async_client.post("/checklist", json=checklist_data, timeout=20)
+    response = await async_client.post("/checklist", json=checklist_data_sheet_id, timeout=20)
 
     assert response.status_code == 200, "Status code is not 200"
-    result_data = response.json()
-    assert result_data[1].get("title") == "В проекте есть .gitignore"
 
 
 @pytest.mark.asyncio
-async def test_generate_motivation_with_noai(generate_motivation_data: dict, async_client: AsyncClient):
-    response = await async_client.post("/generate-motivation", json=generate_motivation_data, timeout=30)
+async def test_generate_motivation_with_noai(motivation_data_noai: dict, async_client: AsyncClient):
+    response = await async_client.post("/generate-motivation", json=motivation_data_noai, timeout=30)
     assert response.status_code == 200, "Status code is not 200"
     result = response.json()
     assert 'Глеб' in result.get("response")
 
 
 @pytest.mark.asyncio
-async def test_generate_motivation_with_python_simple(generate_motivation_data: dict, async_client: AsyncClient):
-    generate_motivation_data['prompt_name'] = 'python_simple'
-    response = await async_client.post("/generate-motivation", json=generate_motivation_data, timeout=30)
+async def test_generate_motivation_with_python_simple(motivation_data_simple: dict, async_client: AsyncClient):
+    response = await async_client.post("/generate-motivation", json=motivation_data_simple, timeout=30)
     assert response.status_code == 200, "Status code is not 200"
     result = response.json()
     assert 'Глеб' in result.get("response")

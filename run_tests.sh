@@ -19,7 +19,7 @@ sleep 5
 
 # Step 2: Run API tests without caching (expected to fail)
 echo -e "\n### Step 2: Running API tests without caching..."
-pytest_output=$(pytest -q -n 5 --disable-warnings \
+pytest_output=$(pytest -q -n 4 --disable-warnings \
     tests/test_api.py::test_checklist_full \
     tests/test_api.py::test_checklist_without_sheet_id \
     tests/test_api.py::test_checklist_with_sheet_id \
