@@ -19,8 +19,12 @@ router = APIRouter()
 
 @router.post("/checklist/full", tags=["Checklist Full"])
 async def build_checklist_full(checklist_request: ChecklistRequest):
-    logger.debug("Генерируем полный чеклист по его названию")
-    checklist: Checklist = checklist_builder.get(checklist_request.task_name)
+
+    if checklist_request.task_name:
+        logger.debug("Генерируем полный чеклист по его названию")
+        checklist: Checklist = checklist_builder.get(checklist_request.task_name)
+    else:
+        return JSONResponse({"error": "task_name expected"}, status_code=400)
 
     if checklist is None:
         return JSONResponse({"error": "Checklist not found"}, status_code=404)
