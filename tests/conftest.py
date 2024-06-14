@@ -88,7 +88,29 @@ def checklist_data():
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Слава Леонтьев",
         "stream_name": "Тестовый поток",
-        "task_name": "Курсовая 5. Работа с базами данных",
+        "task_name": "Курсовая 6. Основы веб-разработки на Django",  # таблица где is_ready=True, status="LOADING"
+    }
+
+
+@pytest.fixture
+def checklist_is_ready_false_data():
+    return {
+        "ticket_id": 222222,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Слава Леонтьев",
+        "stream_name": "Тестовый поток",
+        "task_name": "Курсовая 4. ООП",  # таблица где is_ready=False
+    }
+
+
+@pytest.fixture
+def checklist_status_error_data():
+    return {
+        "ticket_id": 333333,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Слава Леонтьев",
+        "stream_name": "Тестовый поток",
+        "task_name": "Курсовая 5. Работа с базами данных",  # таблица со status="ERROR"
     }
 
 

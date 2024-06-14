@@ -14,7 +14,10 @@ from src.handlers.api import router as api_router
 from src.handlers.auxiliary_api import router as auxiliary_api_router
 from src.handlers.pages import router as pages_router
 
-if SERVER == 'prod':
+if SERVER is None:
+    raise ValueError("App is not started. SERVER must be set")
+
+if SERVER == 'dev':
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Запускаем кеширование при старте приложения
