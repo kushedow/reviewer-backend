@@ -24,7 +24,7 @@ pytest_output=$(pytest -q -n 4 --disable-warnings \
     tests/test_api.py::test_checklist_without_sheet_id \
     tests/test_api.py::test_checklist_with_sheet_id \
     tests/test_api.py::test_generate_motivation_with_python_simple \
-    tests/test_api.py::test_explain_slug \
+    tests/test_api.py::test_explain_slug_without_student_id \
     tests/test_api.py::test_explain_slug_personalized)
 
 # Count failed tests

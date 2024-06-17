@@ -1,5 +1,9 @@
+import asyncio
+
 import pytest
 from httpx import AsyncClient
+
+from src.dependencies import sheet_loader
 
 
 @pytest.mark.asyncio
@@ -63,6 +67,14 @@ async def test_generate_motivation_with_python_simple(motivation_data_simple: di
 async def test_report(report_data: dict, async_client: AsyncClient):
     response = await async_client.post("/report", json=report_data, timeout=20)
     assert response.status_code == 201, "Status code is not 201"
+    await asyncio.sleep(1)
+
+    recorded_row = sheet_loader.get_last_n_rows(sheet_name="ACTIVITIES", rows_count=1)
+    row = recorded_row[0]
+
+    assert row[1] == str(report_data["ticket_id"])
+    assert row[2] == report_data["mentor_full_name"]
+    assert row[3] == 'close'
 
 
 @pytest.mark.asyncio
@@ -76,12 +88,21 @@ async def test_explain_slug(async_client: AsyncClient):
     slug = "sozdaet-klassy-i-ekzemplyary-iz-klassov"
     student_id = "123456"
 
-    # Test 1: with student_id
     response = await async_client.get(f"/explain/{slug}?student_id={student_id}", timeout=20)
     assert response.status_code == 301, "Status code is not 301"
+    await asyncio.sleep(3)
 
-    # Test 2: without student_id
+    recorded_row = sheet_loader.get_last_n_rows(sheet_name="WIKI_REQUESTS", rows_count=1)
+    row = recorded_row[0]
+
+    assert row[1] == student_id
+    assert row[2] == slug
+
+
+@pytest.mark.asyncio
+async def test_explain_slug_without_student_id(async_client: AsyncClient):
     slug = "realizuet-razlichnye-metody-klassov-soglasno-postavlennoy-zadache"
+
     response = await async_client.get(f"/explain/{slug}", timeout=20)
     assert response.status_code == 200, "Status code is not 200"
 
@@ -107,3 +128,12 @@ async def test_explain_slug_rate(async_client: AsyncClient):
         f"/explain/{slug}/rate?grade={grade}&student_id={student_id}&personalized={personalized}", timeout=20
     )
     assert response.status_code == 200, "Status code is not 200"
+    await asyncio.sleep(3)
+
+    recorded_row = sheet_loader.get_last_n_rows(sheet_name="WIKI_RATES", rows_count=1)
+    row = recorded_row[0]
+
+    assert row[0] == slug
+    assert row[1] == str(student_id)
+    assert row[2] == str(grade)
+    assert row[3] == "personalized"
