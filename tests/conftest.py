@@ -86,20 +86,81 @@ def checklist_data():
     return {
         "ticket_id": 111111,
         "student_full_name": "Глеб Кушедов",
-        "mentor_full_name": "Слава Леонтьев",
+        "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
-        "task_name": "Курсовая 5. Работа с базами данных",
+        "task_name": "Курсовая 6. Основы веб-разработки на Django",  # таблица где is_ready=True, status="LOADING"
     }
 
 
 @pytest.fixture
-def generate_motivation_data():
+def checklist_data_sheet_id():
     return {
         "ticket_id": 111111,
         "student_full_name": "Глеб Кушедов",
-        "mentor_full_name": "Слава Леонтьев",
+        "mentor_full_name": "Тест Тестов",
+        "stream_name": "Тестовый поток",
+        "sheet_id": "1eob4Hykpmm3S2Cigz31aPBTBNXHKbexuHq5h4h1Ehbk",
+    }
+
+
+@pytest.fixture
+def checklist_is_ready_false_data():
+    return {
+        "ticket_id": 222222,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Тест Тестов",
+        "stream_name": "Тестовый поток",
+        "task_name": "Курсовая 4. ООП",  # таблица где is_ready=False
+    }
+
+
+@pytest.fixture
+def checklist_status_error_data():
+    return {
+        "ticket_id": 333333,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Тест Тестов",
+        "stream_name": "Тестовый поток",
+        "task_name": "Курсовая 5. Работа с базами данных",  # таблица со status="ERROR"
+    }
+
+
+@pytest.fixture
+def motivation_data_noai():
+    return {
+        "ticket_id": 111111,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
         "prompt_name": "NOAI",
+        "feedback_body": "✅⠀Решение выложено на GitHub и находится в ветке main⠀\n✅⠀В коммитах нет "
+                         "игнорируемых файлов, отлично!⠀\n✅⠀Создан .gitignore файл, использован шаблон "
+                         "для заполнения (например, этот: "
+                         "https://github.com/github/gitignore/blob/main/Python.gitignore)⠀\n</p><p><strong>"
+                         "Соотетствие pep 8: </strong></p><p>\n✅⠀Нет грубых нарушений PEP8 в оформлении кода⠀\n</p>"
+                         "<p><strong>Класс категории: </strong></p><p>\n✅⠀В случае, если количество в товаре - "
+                         "нулевое происходит выбрасывание ошибки ValueError с соответсвующим сообщением. Сообщение "
+                         "при выбрасывании ошибки переопределено и сообщает пользователю о том, что из-за чего "
+                         "произошла ошибка (например, \"Нельзя добавить товар с нулевым количеством!\")⠀\n✅⠀"
+                         "В классе категории реализован метод, который работает с приватным атрибутом списка товаров. "
+                         "Метод расчитывает среднюю стоимость с помощью функций sum() и len() ⠀\n✅⠀Метод подсчета "
+                         "среднего ценника возвращает верные значения⠀\n✅⠀Обработан случай, когда в категории нет "
+                         "товаров и сумма всех товаров будет делиться на ноль. Метод подсчета среднего ценника "
+                         "возвращает 0, когда количество товаров в категории равно 0. Ошибки деления на ноль не "
+                         "возникает.⠀\n✅⠀При нулевом количестве продуктов обрабатывается исключение ZeroDivisionError"
+                         " ⠀\n✅⠀При нулевом количестве товаров программа продолжает работу⠀",
+        "task_name": "Тест 1"
+    }
+
+
+@pytest.fixture
+def motivation_data_simple():
+    return {
+        "ticket_id": 111111,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Тест Тестов",
+        "stream_name": "Тестовый поток",
+        "prompt_name": "python_simple",
         "feedback_body": "✅⠀Решение выложено на GitHub и находится в ветке main⠀\n✅⠀В коммитах нет "
                          "игнорируемых файлов, отлично!⠀\n✅⠀Создан .gitignore файл, использован шаблон "
                          "для заполнения (например, этот: "
@@ -126,7 +187,7 @@ def report_data():
         "ticket_id": 600111,
         "student_id": 111222333,
         "student_full_name": "Глеб Кушедов",
-        "mentor_full_name": "Слава Леонтьев",
+        "mentor_full_name": "Тест Тестов",
         "stream_name": "Python 01",
         "task_name": "Тестовое задание",
         "checklist_data": {
@@ -167,7 +228,7 @@ def report_soft_skills_data():
         "ticket_id": 600101,
         "student_id": 111222333,
         "student_full_name": "Иван Тапорыжкин",
-        "mentor_full_name": "Слава Леонтьев",
+        "mentor_full_name": "Тест Тестов",
         "stream_name": "Python 11.0",
         "task_name": "Домашка тестовая 1.1",
         "skills": {

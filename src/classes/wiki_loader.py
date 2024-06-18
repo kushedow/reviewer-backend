@@ -28,7 +28,7 @@ class WikiLoader(ABCGspreadLoader):
     def find(self, key: str, value: str | int | float):
         value = value.strip().rstrip(".")
         for article in self.__cache.values():
-            if getattr(article, key).strip().rstrip(".") == value:
+            if getattr(article, key) == value:
                 return article
 
     def reload(self):
@@ -38,6 +38,13 @@ class WikiLoader(ABCGspreadLoader):
 
         logger.info(f"{self.__class__.__name__}: Caching started")
         records = sheet.get_all_records()
-        self.__cache = {record["slug"]: WikiArticle(**record) for record in records}
+        self.__cache = {
+            record["slug"]: WikiArticle(
+                **{
+                    key: value.strip().rstrip(".") if isinstance(value, str) else value
+                    for key, value in record.items()
+                }
+            ) for record in records
+        }
         logger.info(f"{self.__class__.__name__}: Caching completed")
 

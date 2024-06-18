@@ -20,18 +20,20 @@ sleep 5
 # Step 2: Run API tests without caching (expected to fail)
 echo -e "\n### Step 2: Running API tests without caching..."
 pytest_output=$(pytest -q -n 4 --disable-warnings \
+    tests/test_api.py::test_checklist_full \
     tests/test_api.py::test_checklist_without_sheet_id \
+    tests/test_api.py::test_checklist_with_sheet_id \
     tests/test_api.py::test_generate_motivation_with_python_simple \
-    tests/test_api.py::test_explain_slug \
+    tests/test_api.py::test_explain_slug_without_student_id \
     tests/test_api.py::test_explain_slug_personalized)
 
 # Count failed tests
 failed_tests=$(echo "$pytest_output" | grep -c 'FAILED')
 
-if [ "$failed_tests" -eq 4 ]; then
-    echo -e "\n### All 4 tests failed as expected without caching. OK!"
+if [ "$failed_tests" -eq 6 ]; then
+    echo -e "\n### All 6 tests failed as expected without caching. OK!"
 else
-    echo -e "\n!!! Unexpected result: $failed_tests out of 4 tests failed without caching."
+    echo -e "\n!!! Unexpected result: $failed_tests out of 6 tests failed without caching."
 fi
 
 # Step 3: Trigger cache refresh (assuming /refresh endpoint triggers cache initialization)

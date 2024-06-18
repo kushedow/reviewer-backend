@@ -14,6 +14,9 @@ from src.handlers.api import router as api_router
 from src.handlers.auxiliary_api import router as auxiliary_api_router
 from src.handlers.pages import router as pages_router
 
+if SERVER is None:
+    raise ValueError("App is not started. SERVER must be set")
+
 if SERVER == 'prod':
     @asynccontextmanager
     async def lifespan(app: FastAPI):
