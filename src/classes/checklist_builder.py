@@ -40,7 +40,6 @@ class ChecklistBuilder(ABCGspreadLoader):
 
             checklist.body = data
             checklist.status = ChecklistStatusEnum.OK
-            checklist.is_ready = True
             logger.debug(f"Processed checklist {index} of {len(self.__cache)}")
 
         except (GSpreadException, SpreadsheetNotFound, KeyError):
