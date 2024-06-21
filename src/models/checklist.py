@@ -35,4 +35,4 @@ class Checklist(BaseModel):
     motivation: str = Field(default="", description="Мотивашка после выполнения",
                             examples=["Ты молодец, ты выполнил задание"])
     softcheck: bool = Field(default=False, description="Софтчек?", examples=[True, False])
-    is_ready: bool = Field(default=False, description="Активен ли чеклист?", examples=[True, False])
+    is_ready: bool = Field(default=True, description="Активен ли чеклист?", examples=[True, False])

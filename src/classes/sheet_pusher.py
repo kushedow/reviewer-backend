@@ -3,10 +3,10 @@ from typing import Any, MutableMapping
 
 from gspread import Client, Worksheet, Spreadsheet
 from loguru import logger
-from pydantic import BaseModel
 
 from src.models.ai_request import AIRequest
 from src.models.checklist_report import ChecklistReport
+from src.models.checklist_request import ChecklistRequest
 from src.models.softskills_report import SoftskillsReport
 
 
@@ -43,7 +43,8 @@ class SheetPusher:
                 "lesson": report.task_name,
                 "step": criteria.get("step"),
                 "skill": criteria.get("skill"),
-                "note": criteria.get("note")
+                "note": criteria.get("note"),
+                "created_at": self.__get_current_time(),
             }
             logger.debug("Добавляем запись в табличку критериев", value=data_to_push)
             rows_to_push.append(list(data_to_push.values()))
@@ -66,13 +67,16 @@ class SheetPusher:
         logger.debug(f"Записываем генерацию ИИ в табличку генерации")
         return result
 
-    def push_activity_from_request(self, model: BaseModel, event="") -> MutableMapping[str, Any]:
+    def push_activity_from_request(
+            self, model: ChecklistReport | ChecklistRequest, event=""
+    ) -> MutableMapping[str, Any]:
         """ Push activity report to ACTIVITIES google sheet """
         worksheet = self.__get_worksheet(sheet_name="ACTIVITIES")
         current_time = self.__get_current_time()
         result = worksheet.append_row([
             current_time,
             model.ticket_id,
+            model.task_name,
             model.mentor_full_name,
             event
         ])

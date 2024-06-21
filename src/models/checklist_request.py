@@ -6,5 +6,5 @@ class ChecklistRequest(BaseModel):
     student_full_name: str= Field(examples=["Глеб Кушедов"])
     mentor_full_name: str= Field(examples=["Слава Леонтьев"])
     stream_name: str= Field(examples=["Тестовый поток"])
-    task_name: str = Field(default=None, examples=["13.1 Введение в ООП"])
+    task_name: str = Field(default="", examples=["13.1 Введение в ООП"])
     sheet_id: str = Field(default=None, examples=[])

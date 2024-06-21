@@ -19,7 +19,7 @@ sleep 5
 
 # Step 2: Run API tests without caching (expected to fail)
 echo -e "\n### Step 2: Running API tests without caching..."
-pytest_output=$(pytest -q -n 4 --disable-warnings \
+pytest_output=$(pytest -q --disable-warnings \
     tests/test_api.py::test_checklist_full \
     tests/test_api.py::test_checklist_without_sheet_id \
     tests/test_api.py::test_checklist_with_sheet_id \
@@ -41,16 +41,18 @@ echo -e "\n### Step 3: Triggering cache refresh..."
 curl -X GET http://127.0.0.1:8000/refresh
 
 # Wait for 30 seconds for cache to initialize
-echo -e "\n### Step 4: Waiting for 30 seconds for cache initialization..."
-sleep 30
+echo -e "\n### Step 4: Waiting for 40 seconds for cache initialization..."
+sleep 40
 
 # Step 5: Run API tests with caching (expected to pass)
 echo -e "\n### Step 5: Running API tests with caching..."
-pytest -n auto --disable-warnings tests/test_api.py
+pytest -q --disable-warnings tests/test_api.py
+
+sleep 10
 
 # Step 6: Run SheetPusher methods tests
 echo -e "\n### Step 6: Running SheetPusher methods tests..."
-pytest --disable-warnings tests/test_sheet_pusher.py
+pytest -q --disable-warnings tests/test_sheet_pusher.py
 
 # Step 7: Stop the FastAPI application
 echo -e "\n### Step 7: Stopping FastAPI application..."

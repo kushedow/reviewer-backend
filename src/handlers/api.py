@@ -18,7 +18,7 @@ router = APIRouter()
 
 
 @router.post("/checklist/full", tags=["Checklist Full"])
-async def build_checklist_full(checklist_request: ChecklistRequest):
+async def build_checklist_full(checklist_request: ChecklistRequest, background_tasks: BackgroundTasks):
 
     if checklist_request.task_name:
         logger.debug("Генерируем полный чеклист по его названию")
@@ -33,16 +33,24 @@ async def build_checklist_full(checklist_request: ChecklistRequest):
         return JSONResponse(
             {"error": "An error occurred on server while parsing the checklist"}, status_code=500
         )
-    if not checklist.is_ready:
-        return JSONResponse({"error": "Checklist is not ready"}, status_code=404)
     if checklist is None:
+        # делаем запись в ACTIVITY о том что чеклист не найден
+        background_tasks.add_task(
+            sheet_pusher.push_activity_from_request, model=checklist_request, event="Checklist not found"
+        )
         return JSONResponse({"error": "Checklist not found"}, status_code=404)
+    if not checklist.is_ready:
+        # делаем запись в ACTIVITY о том что чеклист не готов
+        background_tasks.add_task(
+            sheet_pusher.push_activity_from_request, model=checklist_request, event="Checklist is not ready"
+        )
+        return JSONResponse({"error": "Checklist is not ready"}, status_code=404)
 
     return checklist.model_dump()
 
 
 @router.post("/checklist", tags=["Checklist"])
-async def build_checklist(checklist_request: ChecklistRequest):
+async def build_checklist(checklist_request: ChecklistRequest, background_tasks: BackgroundTasks):
     """
     Возвращаем структурированный чеклист.
     Если sheet_id на док задана - используем его.
@@ -58,13 +66,23 @@ async def build_checklist(checklist_request: ChecklistRequest):
         return JSONResponse({"error": "task_name or sheet_id expected"}, status_code=400)
 
     if checklist is None:
+        # делаем запись в ACTIVITY о том что чеклист не найден
+        background_tasks.add_task(
+            sheet_pusher.push_activity_from_request, model=checklist_request, event="Checklist not found"
+        )
         return JSONResponse({"error": "checklist not found"}, status_code=404)
     if not checklist.is_ready:
+        # делаем запись в ACTIVITY о том что чеклист не готов
+        background_tasks.add_task(
+            sheet_pusher.push_activity_from_request, model=checklist_request, event="Checklist is not ready"
+        )
         return JSONResponse({"error": "checklist is not ready"}, status_code=404)
 
-    # делаем запись об открытии тикета
     try:
-        sheet_pusher.push_activity_from_request(model=checklist_request, event="open")
+        # делаем запись об открытии тикета
+        background_tasks.add_task(
+            sheet_pusher.push_activity_from_request, model=checklist_request, event="open"
+        )
     except GSpreadException as error:
         return JSONResponse({"error": str(error)}, status_code=500)
 
@@ -114,7 +132,7 @@ async def save_report(report: ChecklistReport, background_tasks: BackgroundTasks
         background_tasks.add_task(sheet_pusher.push_activity_from_request, model=report, event="close")
 
         # делаем запись по критериям
-        sheet_pusher.push_criteria_from_report(report=report)
+        background_tasks.add_task(sheet_pusher.push_criteria_from_report, report=report)
 
     except GSpreadException as error:
         return JSONResponse({"error": error}, status_code=400)

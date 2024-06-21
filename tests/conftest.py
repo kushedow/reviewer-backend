@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import os
 
@@ -22,6 +23,7 @@ load_dotenv(Path(__file__).parent.parent / '.env')
 from src.models.ai_request import AIRequest
 from src.models.checklist_report import ChecklistReport
 from src.models.softskills_report import SoftskillsReport
+from src.dependencies import sheet_cleaner
 
 SERVER_URL = "http://127.0.0.1:8000"
 
@@ -61,6 +63,17 @@ def ai_request(fake):
 
 
 @pytest.fixture
+def ai_output_text():
+    return (
+        'TEST / Заметно, что ты вложил много усилий в это задание, и результат получился великолепным. '
+        'Все необходимые элементы выполнены и отмечены как "✅". Что касается твоего кода, я проверил его '
+        'с удовольствием и не нашел никаких замечаний.\nКроме того, нет никаких задач, требующих исправлений. '
+        'Так что я с радостью принимаю твою работу. Желаю удачи в следующих уроках и с нетерпением жду новых '
+        'интересных решений. У меня даже нет предложений по улучшению!'
+    )
+
+
+@pytest.fixture
 def softskills_report(fake):
     return SoftskillsReport(
         ticket_id=fake.random_number(digits=6, fix_len=True),
@@ -75,6 +88,24 @@ def softskills_report(fake):
     )
 
 
+@pytest.fixture
+def request_to_wiki_data(fake):
+    return {
+        "student_id": fake.random_number(digits=9, fix_len=True),
+        "skill": fake.sentence(nb_words=3),
+    }
+
+
+@pytest.fixture
+def push_wiki_rate_data(fake):
+    return {
+        "student_id": fake.random_number(digits=9, fix_len=True),
+        "slug": fake.sentence(nb_words=3),
+        "grade": fake.random_int(min=1, max=5),
+        "personalized": fake.word(),
+    }
+
+
 @pytest_asyncio.fixture
 async def async_client():
     async with AsyncClient(base_url=SERVER_URL) as client:
@@ -84,7 +115,7 @@ async def async_client():
 @pytest.fixture
 def checklist_data():
     return {
-        "ticket_id": 111111,
+        "ticket_id": 100000,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
@@ -93,9 +124,20 @@ def checklist_data():
 
 
 @pytest.fixture
+def checklist_data_not_exists():
+    return {
+        "ticket_id": 613613,
+        "student_full_name": "Глеб Кушедов",
+        "mentor_full_name": "Тест Тестов",
+        "stream_name": "Тестовый поток",
+        "task_name": "6.13 Нет данного задания",
+    }
+
+
+@pytest.fixture
 def checklist_data_sheet_id():
     return {
-        "ticket_id": 111111,
+        "ticket_id": 110011,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
@@ -106,7 +148,7 @@ def checklist_data_sheet_id():
 @pytest.fixture
 def checklist_is_ready_false_data():
     return {
-        "ticket_id": 222222,
+        "ticket_id": 200000,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
@@ -117,7 +159,7 @@ def checklist_is_ready_false_data():
 @pytest.fixture
 def checklist_status_error_data():
     return {
-        "ticket_id": 333333,
+        "ticket_id": 300000,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
@@ -128,7 +170,7 @@ def checklist_status_error_data():
 @pytest.fixture
 def motivation_data_noai():
     return {
-        "ticket_id": 111111,
+        "ticket_id": 400000,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
@@ -149,14 +191,14 @@ def motivation_data_noai():
                          "возвращает 0, когда количество товаров в категории равно 0. Ошибки деления на ноль не "
                          "возникает.⠀\n✅⠀При нулевом количестве продуктов обрабатывается исключение ZeroDivisionError"
                          " ⠀\n✅⠀При нулевом количестве товаров программа продолжает работу⠀",
-        "task_name": "Тест 1"
+        "task_name": "Тестове задание 777"
     }
 
 
 @pytest.fixture
 def motivation_data_simple():
     return {
-        "ticket_id": 111111,
+        "ticket_id": 500000,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
         "stream_name": "Тестовый поток",
@@ -184,7 +226,7 @@ def motivation_data_simple():
 @pytest.fixture
 def report_data():
     return {
-        "ticket_id": 600111,
+        "ticket_id": 600000,
         "student_id": 111222333,
         "student_full_name": "Глеб Кушедов",
         "mentor_full_name": "Тест Тестов",
@@ -225,7 +267,7 @@ def report_data():
 @pytest.fixture
 def report_soft_skills_data():
     return {
-        "ticket_id": 600101,
+        "ticket_id": 700000,
         "student_id": 111222333,
         "student_full_name": "Иван Тапорыжкин",
         "mentor_full_name": "Тест Тестов",
@@ -238,3 +280,18 @@ def report_soft_skills_data():
             "skill_4": 0
         }
     }
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_sessionfinish():
+    async def clean_all_sheets():
+        await asyncio.gather(
+            sheet_cleaner.clean_sheet(sheet_name="ACTIVITIES", range_str="A8:M25"),
+            sheet_cleaner.clean_sheet(sheet_name="CRITERIA", range_str="A8:M25"),
+            sheet_cleaner.clean_sheet(sheet_name="SOFTSKILLS", range_str="A8:M25"),
+            sheet_cleaner.clean_sheet(sheet_name="WIKI_REQUESTS", range_str="A8:M25"),
+            sheet_cleaner.clean_sheet(sheet_name="WIKI_RATES", range_str="A8:M25"),
+            sheet_cleaner.clean_sheet(sheet_name="GENERATIONS", range_str="A4:M5")
+        )
+
+    asyncio.run(clean_all_sheets())
