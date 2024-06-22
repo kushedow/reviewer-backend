@@ -27,6 +27,16 @@ class ChecklistBuilder(ABCGspreadLoader):
         records = await sheet.get_all_records()
         self.__cache = {record["lesson"]: Checklist(**record) for record in records}
 
+    @staticmethod
+    async def _load_advices(file: AsyncioGspreadSpreadsheet):
+
+        try:
+            sheet = await file.worksheet("advices")
+            return await sheet.get_all_records()
+        except GSpreadException:
+            logger.error(f"Checklist advices loading error")
+            return None
+
     async def _load_one_checklist(self, index: int, checklist: Checklist):
 
         try:
@@ -39,15 +49,8 @@ class ChecklistBuilder(ABCGspreadLoader):
 
             all_worksheets = await file.worksheets()
             if 'advices' in [sheet.title for sheet in all_worksheets]:
-                try:
-                    sheet_advices: AsyncioGspreadWorksheet = await file.worksheet("advices")
-                    advices = await sheet_advices.get_all_records()
+                if advices := await self._load_advices(file):
                     checklist.advices = advices
-                except WorksheetNotFound:
-                    return None
-                except GSpreadException:
-                    logger.error(f"Checklist advices loading error")
-                    return None
 
             checklist.body = data
             checklist.status = ChecklistStatusEnum.OK
