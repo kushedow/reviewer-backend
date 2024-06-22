@@ -19,6 +19,9 @@ class TestSheetPusher:
 
         recorded_rows = sheet_loader.get_all_rows(sheet_name="CRITERIA", worksheet_name="criteria")
 
+        expected_count = len(checklist_report.checklist_data)
+        found_skill_count = 0
+
         for row in recorded_rows:
             for expected_checklist in checklist_report.checklist_data.values():
                 if row[8] == expected_checklist["skill"]:
@@ -32,6 +35,10 @@ class TestSheetPusher:
                     assert row[7] == expected_checklist["step"]
                     assert row[9] == expected_checklist["note"]
                     assert datetime.strptime(row[10], "%Y-%m-%dT%H:%M:%S")
+                    found_skill_count += 1
+
+        assert found_skill_count == expected_count, \
+            f"Expected {expected_count} skill records, but found {found_skill_count}!"
 
     def test_push_ai_generation_from_request(self, ai_request: AIRequest, ai_output_text: str):
         """ Test push AI generation report to GENERATIONS google sheet """
@@ -48,9 +55,14 @@ class TestSheetPusher:
             ai_output_text
         ]
 
+        found = False
+
         for row in recorded_rows:
             if row[1] == str(ai_request.ticket_id):
                 assert row[1:5] == expected_data  # проверяем ticket_id, mentor, input, output
+                found = True
+
+        assert found, "Expected record not found in table GENERATIONS"
 
     def test_push_activity_from_request(self, checklist_report: ChecklistReport):
         """ Test push activities report to ACTIVITIES google sheet """
@@ -68,9 +80,14 @@ class TestSheetPusher:
             event
         ]
 
+        found = False
+
         for row in recorded_rows:
             if row[1] == str(checklist_report.ticket_id):
                 assert row[1:5] == expected_data
+                found = True
+
+        assert found, "Expected record not found in table ACTIVITIES"
 
     def test_push_softskills_from_request(self, softskills_report: SoftskillsReport):
         """ Test push softskills report to SOFTSKILLS google sheet """
@@ -81,15 +98,21 @@ class TestSheetPusher:
 
         recorded_rows = sheet_loader.get_all_rows(sheet_name="SOFTSKILLS")
 
+        expected_count = len(softskills_report.skills)
+        found_skill_count = 0
+
         for row in recorded_rows:
-            for skill_value in softskills_report.skills.values():
-                expected_skill = f'skill_{skill_value}'
-                if row[5] == expected_skill and row[0] == str(softskills_report.ticket_id):
+            for skill in softskills_report.skills:
+                if row[0] == str(softskills_report.ticket_id) and row[5] == skill:
                     assert row[1] == str(softskills_report.student_id)
                     assert row[3] == softskills_report.mentor_full_name
                     assert row[4] == softskills_report.task_name
-                    assert row[6] == str(softskills_report.skills[expected_skill])
+                    assert row[6] == str(softskills_report.skills[skill])
                     assert datetime.strptime(row[7], "%Y-%m-%dT%H:%M:%S")
+                    found_skill_count += 1
+
+        assert found_skill_count == expected_count, \
+            f"Expected {expected_count} skill records, but found {found_skill_count}!"
 
     def test_push_save_request_to_wiki(self, request_to_wiki_data: dict):
         """ Test push save request to WIKI_REQUESTS google sheet """
@@ -101,9 +124,14 @@ class TestSheetPusher:
 
         recorded_row = sheet_loader.get_all_rows(sheet_name="WIKI_REQUESTS")
 
+        found = False
+
         for row in recorded_row:
             if row[1] == student_id:
                 assert row[2] == skill
+                found = True
+
+        assert found, "Expected record not found in table WIKI_REQUESTS"
 
     def test_push_wiki_rate(self, push_wiki_rate_data: dict):
         """ Test push wiki rate to WIKI_RATES google sheet """
@@ -116,9 +144,15 @@ class TestSheetPusher:
         assert result["updates"]["updatedRows"] == 1
 
         recorded_row = sheet_loader.get_all_rows(sheet_name="WIKI_RATES")
+
+        found = False
+
         for row in recorded_row:
             if row[0] == slug:
                 assert row[1] == student_id
                 assert row[2] == grade
                 assert row[3] == personalized
                 assert datetime.strptime(row[4], "%Y-%m-%dT%H:%M:%S")
+                found = True
+
+        assert found, "Expected record not found in table WIKI_RATES"

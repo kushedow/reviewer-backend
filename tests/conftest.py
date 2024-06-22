@@ -291,7 +291,7 @@ def pytest_sessionfinish():
             sheet_cleaner.clean_sheet(sheet_name="SOFTSKILLS", range_str="A8:M25"),
             sheet_cleaner.clean_sheet(sheet_name="WIKI_REQUESTS", range_str="A8:M25"),
             sheet_cleaner.clean_sheet(sheet_name="WIKI_RATES", range_str="A8:M25"),
-            sheet_cleaner.clean_sheet(sheet_name="GENERATIONS", range_str="A4:M5")
+            sheet_cleaner.clean_sheet(sheet_name="GENERATIONS", range_str="A4:M25")
         )
 
     asyncio.run(clean_all_sheets())

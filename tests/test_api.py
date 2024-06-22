@@ -49,9 +49,15 @@ async def test_checklist_not_exists(checklist_data_not_exists: dict, async_clien
         checklist_data_not_exists["mentor_full_name"],
         'Checklist not found',
     ]
+
+    found = False
+
     for row in recorded_rows:
         if row[1] == expected_data[0]:
             assert row[1:5] == expected_data  # убираем record_time в начале и timedelta, ticket_link в конце
+            found = True
+
+    assert found, "Expected record not found in table ACTIVITIES"
 
 
 @pytest.mark.asyncio
@@ -100,13 +106,22 @@ async def test_report(report_data: dict, async_client: AsyncClient):
         report_data["mentor_full_name"],
         'close',
     ]
+
+    found = False
+
     for row in recorded_rows:
         if row[1] == expected_data[0]:
             assert row[1:5] == expected_data  # убираем record_time в начале и timedelta, ticket_link в конце
+            found = True
+
+    assert found, "Expected record not found in table ACTIVITIES"
 
     recorded_rows_criteria = sheet_loader.get_all_rows(sheet_name="CRITERIA", worksheet_name="criteria")
 
     report = ChecklistReport(**report_data)
+
+    expected_count = len(report.checklist_data)
+    found_criteria_count = 0
 
     for row in recorded_rows_criteria:
         for expected_checklist in report.checklist_data.values():
@@ -121,6 +136,10 @@ async def test_report(report_data: dict, async_client: AsyncClient):
                 assert row[8] == expected_checklist["skill"]
                 assert row[9] == expected_checklist["note"]
                 assert datetime.strptime(row[10], "%Y-%m-%dT%H:%M:%S")
+                found_criteria_count += 1
+
+    assert found_criteria_count == expected_count, \
+        f"Expected {expected_count} criteria records, but found {found_criteria_count}"
 
 
 @pytest.mark.asyncio
@@ -142,9 +161,14 @@ async def test_explain_slug(async_client: AsyncClient):
 
     expected_data = [student_id, slug]
 
+    found = False
+
     for row in recorded_row:
         if row[1] == expected_data[0]:
             assert row[1:] == expected_data
+            found = True
+
+    assert found, "Expected record not found in table WIKI_REQUESTS"
 
 
 @pytest.mark.asyncio
@@ -187,6 +211,11 @@ async def test_explain_slug_rate(async_client: AsyncClient):
         personalized
     ]
 
+    found = False
+
     for row in recorded_row:
         if row[0] == expected_data[0]:
             assert row[:-1] == expected_data  # убираем datetime в конце
+            found = True
+
+    assert found, "Expected record not found in table WIKI_RATES"
