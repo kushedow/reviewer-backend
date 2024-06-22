@@ -6,6 +6,7 @@ from openai import AsyncOpenAI
 from src.classes.ai_feedback_builder import AIFeedBackBuilder
 from src.classes.checklist_builder import ChecklistBuilder
 from src.classes.prompts_loader import PromptsLoader
+from src.classes.sheet_cleaner import SheetCleaner
 from src.classes.sheet_loader import SheetLoader
 from src.classes.sheet_pusher import SheetPusher
 
@@ -28,6 +29,9 @@ sheet_pusher = SheetPusher(gc, config.SHEET_IDS)
 
 # объект для проверки записанных данных в Google Sheets
 sheet_loader = SheetLoader(gc, config.SHEET_IDS)
+
+# объект для очистки данных в Google Sheets
+sheet_cleaner = SheetCleaner(gc, config.SHEET_IDS)
 
 # объект для сборки критериев из Google Sheets
 checklist_builder = ChecklistBuilder(async_gspread_manager, config.SHEET_IDS["INDICES"])
