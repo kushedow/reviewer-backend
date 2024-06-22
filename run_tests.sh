@@ -6,7 +6,7 @@ source venv/bin/activate
 # Load environment variables from .env
 source .env
 
-export SERVER=$(echo "$SERVER" | tr -d '\r')
+export SERVER=dev
 export OPENAI_API_KEY=$(echo "$OPENAI_API_KEY" | tr -d '\r')
 export CREDENTIALS_PATH=$(echo "$CREDENTIALS_PATH" | tr -d '\r')
 

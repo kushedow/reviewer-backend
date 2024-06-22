@@ -1,4 +1,4 @@
-from gspread import GSpreadException, SpreadsheetNotFound
+from gspread import GSpreadException, SpreadsheetNotFound, WorksheetNotFound
 from gspread_asyncio import (
     AsyncioGspreadClientManager,
     AsyncioGspreadClient,
@@ -30,7 +30,6 @@ class ChecklistBuilder(ABCGspreadLoader):
     async def _load_one_checklist(self, index: int, checklist: Checklist):
 
         try:
-
             file: AsyncioGspreadSpreadsheet = await self.__async_client.open_by_key(checklist.sheet_id)
             sheet: AsyncioGspreadWorksheet = await file.get_sheet1()
             data: list[dict] = await sheet.get_all_records()
@@ -38,13 +37,25 @@ class ChecklistBuilder(ABCGspreadLoader):
             if len(data) == 0 or "title" not in data[0].keys():
                 raise KeyError
 
+            all_worksheets = await file.worksheets()
+            if 'advices' in [sheet.title for sheet in all_worksheets]:
+                try:
+                    sheet_advices: AsyncioGspreadWorksheet = await file.worksheet("advices")
+                    advices = await sheet_advices.get_all_records()
+                    checklist.advices = advices
+                except WorksheetNotFound:
+                    return None
+                except GSpreadException:
+                    logger.error(f"Checklist advices loading error")
+                    return None
+
             checklist.body = data
             checklist.status = ChecklistStatusEnum.OK
 
             logger.debug(f"Processed checklist {index} of {len(self.__cache)}")
 
-        except (GSpreadException, SpreadsheetNotFound, KeyError):
-            logger.error(f"Checklist {checklist.lesson} {checklist.sheet_id} loading error")
+        except (GSpreadException, SpreadsheetNotFound, KeyError) as e:
+            logger.error(f"Checklist {checklist.lesson} {checklist.sheet_id} loading error {str(e)}")
             checklist.status = ChecklistStatusEnum.ERROR
 
     async def _load_checklists(self):

@@ -22,6 +22,16 @@ checklist_example = [
     }
 ]
 
+advice_example = [
+    {
+        "advice": "Порождающие паттерны в ООП",
+        "link": "https://refactoring.guru/ru/design-patterns/creational-patterns",
+        "category": "Для качества кода",
+        "content_type": "Статья",
+        "show_to": "5"
+    }
+]
+
 
 class Checklist(BaseModel):
     lesson: str = Field(description="4.2 Циклы. Часть 2", examples=["Ты молодец, ты выполнил задание"])
@@ -29,6 +39,7 @@ class Checklist(BaseModel):
 
     profession: str = Field(default="", description="Профессия, к которой чеклист", examples=["PD"])
     body: list[dict] = Field(default=[], description="Тело чеклиста", examples=[checklist_example])
+    advices: list[dict] = Field(default=[], description="Советы", examples=[advice_example])
     status: ChecklistStatusEnum = Field(default=ChecklistStatusEnum.LOADING, description="Статус чеклиста",
                                         examples=["OK", "ERROR", "LOADING"])
 
