@@ -37,6 +37,11 @@ PROD_SHEET_IDS = {
 
 SHEET_IDS = PROD_SHEET_IDS if SERVER == "prod" else DEV_SHEET_IDS
 
+# критические заголовки критериев (чеклист не загружается если отсутствует хотя бы один из них)
+CRITICAL_HEADERS = {"title", "5", "3", "group"}
+# некритические заголовки критериев (чеклист загружается)
+NONCRITICAL_HEADERS = {"4", "skill", "step", "hint"}
+
 ALLOWED_FILETYPES = (".js", ".java", ".py", ".class", ".gitignore")
 
 origins = [
