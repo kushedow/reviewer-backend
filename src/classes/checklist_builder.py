@@ -6,6 +6,7 @@ from gspread_asyncio import (
     AsyncioGspreadSpreadsheet
 )
 from loguru import logger
+from pydantic import ValidationError
 
 from src.classes.abc_gspread_loader import ABCGspreadLoader
 from src.models.checklist import Checklist, ChecklistStatusEnum
@@ -24,15 +25,16 @@ class ChecklistBuilder(ABCGspreadLoader):
 
     async def _load_indices(self):
 
-        file = await self.__async_client.open_by_key(self.__index_sheet)
-        sheet = await file.worksheet("index")
-        records = await sheet.get_all_records()
         try:
-            self.__cache = {
-                str(record["lesson"]): Checklist(**{**record, "lesson": str(record["lesson"])})
-                for record in records
-            }
-        except Exception as e:
+            file = await self.__async_client.open_by_key(self.__index_sheet)
+            sheet = await file.worksheet("index")
+            records = await sheet.get_all_records()
+            for record in records:
+                try:
+                    self.__cache[str(record["lesson"])] = Checklist(**record)
+                except ValidationError as e:
+                    logger.error(e)
+        except GSpreadException as e:
             logger.error(e)
 
     @staticmethod
