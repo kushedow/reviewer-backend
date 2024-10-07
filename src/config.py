@@ -43,6 +43,7 @@ origins = [
     "https://student-care.sky.pro",
     "http://localhost",
     "http://localhost:10000",
+    "*"
 ]
 
 METRICA_CODE = """       
