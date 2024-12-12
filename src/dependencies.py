@@ -34,7 +34,12 @@ sheet_loader = SheetLoader(gc, config.SHEET_IDS)
 sheet_cleaner = SheetCleaner(gc, config.SHEET_IDS)
 
 # объект для сборки критериев из Google Sheets
-checklist_builder = ChecklistBuilder(async_gspread_manager, config.SHEET_IDS["INDICES"])
+checklist_builder = ChecklistBuilder(
+    async_gspread_manager,
+    config.SHEET_IDS["INDICES"],
+    config.CRITICAL_HEADERS,
+    config.NONCRITICAL_HEADERS
+)
 
 # объект для загрузки промптов
 prompts_loader = PromptsLoader(gc, config.SHEET_IDS["PROMPTS"])

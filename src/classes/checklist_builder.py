@@ -1,4 +1,4 @@
-from gspread import GSpreadException, SpreadsheetNotFound, WorksheetNotFound
+from gspread import GSpreadException, SpreadsheetNotFound
 from gspread_asyncio import (
     AsyncioGspreadClientManager,
     AsyncioGspreadClient,
@@ -6,6 +6,7 @@ from gspread_asyncio import (
     AsyncioGspreadSpreadsheet
 )
 from loguru import logger
+from pydantic import ValidationError
 
 from src.classes.abc_gspread_loader import ABCGspreadLoader
 from src.models.checklist import Checklist, ChecklistStatusEnum
@@ -13,19 +14,28 @@ from src.models.checklist import Checklist, ChecklistStatusEnum
 
 class ChecklistBuilder(ABCGspreadLoader):
 
-    def __init__(self, async_manager, index_sheet):
+    def __init__(self, async_manager, index_sheet, critical_headers, noncritical_headers):
 
         self.__async_manager: AsyncioGspreadClientManager = async_manager
         self.__async_client: AsyncioGspreadClient | None = None
         self.__index_sheet = index_sheet
         self.__cache: dict[str, Checklist] = {}
+        self.__critical_headers = critical_headers
+        self.__noncritical_headers = noncritical_headers
 
     async def _load_indices(self):
 
-        file = await self.__async_client.open_by_key(self.__index_sheet)
-        sheet = await file.worksheet("index")
-        records = await sheet.get_all_records()
-        self.__cache = {record["lesson"]: Checklist(**record) for record in records}
+        try:
+            file = await self.__async_client.open_by_key(self.__index_sheet)
+            sheet = await file.worksheet("index")
+            records = await sheet.get_all_records()
+            for record in records:
+                try:
+                    self.__cache[str(record["lesson"])] = Checklist(**record)
+                except ValidationError as e:
+                    logger.error(e)
+        except GSpreadException as e:
+            logger.error(e)
 
     @staticmethod
     async def _load_advices(file: AsyncioGspreadSpreadsheet):
@@ -37,12 +47,23 @@ class ChecklistBuilder(ABCGspreadLoader):
             logger.error(f"Checklist advices loading error")
             return None
 
+    async def _check_headers(self, sheet_data: list[dict]):
+        headers_in_sheet = set(sheet_data[0].keys())
+
+        if missing_critical_headers := self.__critical_headers - headers_in_sheet:
+            raise KeyError(f"Critical header(s) {missing_critical_headers} not found")
+
+        if missing_noncritical_headers := self.__noncritical_headers - headers_in_sheet:
+            logger.warning(f"Noncritical header(s) {missing_noncritical_headers} not found")
+
     async def _load_one_checklist(self, index: int, checklist: Checklist):
 
         try:
             file: AsyncioGspreadSpreadsheet = await self.__async_client.open_by_key(checklist.sheet_id)
             sheet: AsyncioGspreadWorksheet = await file.get_sheet1()
             data: list[dict] = await sheet.get_all_records()
+
+            await self._check_headers(data)
 
             if len(data) == 0 or "title" not in data[0].keys():
                 raise KeyError
